@@ -2,7 +2,7 @@
 ## Title: ChronicleWeaver |cffd4a85a[Forever Lore Codex]|r
 ## Notes: Investigative lore codex, Grand Archivist Dossiers, multi-page book harvester, and personal field journal for WoW: Forever.
 ## Author: TheOnlyCthulhu
-## Version: 1.2.0
+## Version: 1.2.3
 ## SavedVariables: ChronicleWeaverDB
 ## IconTexture: Interface\AddOns\ChronicleWeaver\Media\logo
 ## AddonCompartmentFunc: ChronicleWeaver_OnAddonCompartmentClick

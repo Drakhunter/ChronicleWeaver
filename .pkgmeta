@@ -26,6 +26,7 @@ ignore:
   - UI/Toast.lua
   - Media/svg
   - Media/logo.png
+  - Media/build-media.mjs
   - Media/package.json
   - Media/package-lock.json
   - Media/node_modules

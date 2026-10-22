@@ -28,14 +28,84 @@ jobs:
           WOWI_API_TOKEN: ${{ secrets.WOWI_API_TOKEN }}
         run: |
           set -euo pipefail
+          # Strip any accidental trailing CR/LF or whitespace from API tokens
+          export CF_API_KEY="$(printf '%s' "${CF_API_KEY:-}" | tr -d '[:space:]')"
+          export GITHUB_OAUTH="$(printf '%s' "${GITHUB_OAUTH:-}" | tr -d '[:space:]')"
+          export WAGO_API_TOKEN="$(printf '%s' "${WAGO_API_TOKEN:-}" | tr -d '[:space:]')"
+          export WOWI_API_TOKEN="$(printf '%s' "${WOWI_API_TOKEN:-}" | tr -d '[:space:]')"
+          echo "CF_API_KEY length: ${#CF_API_KEY}"
+
           curl -sSL https://raw.githubusercontent.com/BigWigsMods/packager/master/release.sh -o /tmp/release.sh
           python3 - << 'PY'
           with open("/tmp/release.sh", "r", encoding="utf-8") as f:
               s = f.read()
-          old_part = 'if result=$( echo "$_cf_payload" | curl -sS --retry 3 --retry-delay 10 \\\n\t\t\t-w "%{http_code}" -o "$resultfile" \\\n\t\t\t-H "x-api-token: $cf_token" \\\n\t\t\t-F "metadata=<-"'
-          new_part = '_cf_payload=$( echo "$_cf_payload" | jq -c "." )\n\tif result=$( curl -sS --retry 3 --retry-delay 10 \\\n\t\t\t-w "%{http_code}" -o "$resultfile" \\\n\t\t\t-H "x-api-token: $cf_token" \\\n\t\t\t--form-string "metadata=$_cf_payload"'
-          assert old_part in s, "Expected upload_curseforge curl block not found in release.sh"
-          s = s.replace(old_part, new_part, 1)
+
+          old_block = """\tresultfile="$releasedir/cf_result.json"
+          \tif result=$( echo "$_cf_payload" | curl -sS --retry 3 --retry-delay 10 \\
+          \t\t\t-w "%{http_code}" -o "$resultfile" \\
+          \t\t\t-H "x-api-token: $cf_token" \\
+          \t\t\t-F "metadata=<-" \\
+          \t\t\t-F "file=@$archive" \\
+          \t\t\t"$project_site/api/projects/$slug/upload-file"
+          \t); then"""
+
+          new_block = """\tresultfile="$releasedir/cf_result.json"
+          \t_cf_payload=$( jq -c "." <<< "$_cf_payload" )
+          \tprintf '%s' "$_cf_payload" > "$releasedir/cf_metadata.json"
+          \techo "CurseForge metadata JSON: $_cf_payload"
+          \tif result=$( python3 - "$project_site/api/projects/$slug/upload-file" "$cf_token" "$releasedir/cf_metadata.json" "$archive" "$resultfile" << 'PYUPLOAD'
+          import sys, os, uuid, urllib.request, urllib.error
+
+          url, token, meta_path, archive_path, result_path = sys.argv[1:6]
+          with open(meta_path, "rb") as f:
+              meta_bytes = f.read()
+          with open(archive_path, "rb") as f:
+              file_bytes = f.read()
+          filename = os.path.basename(archive_path)
+
+          boundary = "------------------------" + uuid.uuid4().hex
+          crlf = b"\\r\\n"
+          body = bytearray()
+
+          # Part 1: metadata
+          body.extend(b"--" + boundary.encode("ascii") + crlf)
+          body.extend(b'Content-Disposition: form-data; name="metadata"' + crlf)
+          body.extend(b"Content-Type: application/json; charset=utf-8" + crlf + crlf)
+          body.extend(meta_bytes + crlf)
+
+          # Part 2: file
+          body.extend(b"--" + boundary.encode("ascii") + crlf)
+          body.extend(f'Content-Disposition: form-data; name="file"; filename="{filename}"'.encode("utf-8") + crlf)
+          body.extend(b"Content-Type: application/zip" + crlf + crlf)
+          body.extend(file_bytes + crlf)
+
+          body.extend(b"--" + boundary.encode("ascii") + b"--" + crlf)
+
+          req = urllib.request.Request(url, data=bytes(body), method="POST")
+          req.add_header("x-api-token", token.strip())
+          req.add_header("Content-Type", f"multipart/form-data; boundary={boundary}")
+          req.add_header("User-Agent", "CurseForge-Uploader/1.0")
+
+          try:
+              with urllib.request.urlopen(req, timeout=60) as resp:
+                  resp_body = resp.read()
+                  with open(result_path, "wb") as out:
+                      out.write(resp_body)
+                  print(resp.status)
+          except urllib.error.HTTPError as e:
+              resp_body = e.read()
+              with open(result_path, "wb") as out:
+                  out.write(resp_body)
+              print(e.code)
+          except Exception as e:
+              with open(result_path, "w", encoding="utf-8") as out:
+                  out.write(str(e))
+              print(500)
+          PYUPLOAD
+          \t); then"""
+
+          assert old_block in s, "Expected upload_curseforge curl block not found in release.sh"
+          s = s.replace(old_block, new_block, 1)
           with open("/tmp/release.sh", "w", encoding="utf-8") as f:
               f.write(s)
           PY
