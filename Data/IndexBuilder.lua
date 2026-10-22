@@ -71,6 +71,11 @@ function ns.UpsertRuntimeEntry(entryObj)
     elseif entryObj.triggerType == "NPC" and entryObj.triggerValue then
         ns.LoreByNPC = ns.LoreByNPC or {}
         ns.LoreByNPC[tostring(entryObj.triggerValue):lower()] = entryObj.key
+        if type(entryObj.aliases) == "table" then
+            for _, alias in ipairs(entryObj.aliases) do
+                ns.LoreByNPC[tostring(alias):lower()] = entryObj.key
+            end
+        end
     elseif entryObj.triggerType == "ITEM" and entryObj.triggerValue then
         ns.LoreByItem = ns.LoreByItem or {}
         local id = tonumber(entryObj.triggerValue) or entryObj.triggerValue
