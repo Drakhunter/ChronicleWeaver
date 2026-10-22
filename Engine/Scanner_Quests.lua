@@ -3,7 +3,7 @@
 -- Pure-story quest harvester (Description + Resolution) & 1-click Gossip button.
 -- Target Client: World of Warcraft: Forever (Interface: 16001, Client 1.60.1)
 -- =========================================================================
-local addonName, ns = ...
+local _, ns = ...
 
 -- -------------------------------------------------------------------------
 -- Helper: Objective Prose Validator (Pure Lore Story Rule - No Kill Counters!)
@@ -48,6 +48,7 @@ local function OnQuestDetail()
 
     local zone, subzone, mapID, x, y = ns.GetPlayerLocationData()
     local questKey = "quest:" .. title
+    local playerKey = ns.GetPlayerKey()
 
     local record = ns.db.quests[questKey] or {
         title = title,
@@ -57,7 +58,8 @@ local function OnQuestDetail()
         mapID = mapID,
         x = x,
         y = y,
-        character = ns.GetPlayerKey(),
+        character = playerKey,
+        characters = {},
         faction = ns.GetPlayerFaction(),
     }
 
@@ -66,6 +68,9 @@ local function OnQuestDetail()
     record.description = questText
     record.zone = zone
     record.subzone = subzone
+    record.characters = record.characters or {}
+    if record.character then record.characters[record.character] = true end
+    record.characters[playerKey] = true
     if x and x > 0 then
         record.mapID = mapID
         record.x = x
@@ -97,6 +102,7 @@ local function OnQuestComplete()
 
     local questKey = "quest:" .. title
     local record = ns.db.quests[questKey]
+    local playerKey = ns.GetPlayerKey()
 
     if not record then
         local rawGiver = (UnitExists("questnpc") and UnitName("questnpc"))
@@ -112,10 +118,15 @@ local function OnQuestComplete()
             mapID = mapID,
             x = x,
             y = y,
-            character = ns.GetPlayerKey(),
+            character = playerKey,
+            characters = {},
             faction = ns.GetPlayerFaction(),
         }
     end
+
+    record.characters = record.characters or {}
+    if record.character then record.characters[record.character] = true end
+    record.characters[playerKey] = true
 
     local isNewResolution = not record.resolution or record.resolution ~= rewardText
     record.resolution = rewardText
@@ -138,11 +149,43 @@ ns.RegisterEvent("QUEST_DETAIL", OnQuestDetail)
 ns.RegisterEvent("QUEST_COMPLETE", OnQuestComplete)
 
 -- -------------------------------------------------------------------------
--- 2. Full Active Quest Log Story Backfill (No Kill Counters!)
+-- 2. Auto-Heal Duplicate Quest Descriptions & Active Quest Log Scanner
 -- -------------------------------------------------------------------------
+function ns.SanitizeDuplicateQuests()
+    if not ns.db or type(ns.db.quests) ~= "table" then return end
+
+    local descCounts = {}
+    local objCounts = {}
+    for _, rec in pairs(ns.db.quests) do
+        if type(rec) == "table" then
+            if rec.description and rec.description ~= "" then
+                descCounts[rec.description] = (descCounts[rec.description] or 0) + 1
+            end
+            if rec.objectiveProse and rec.objectiveProse ~= "" then
+                objCounts[rec.objectiveProse] = (objCounts[rec.objectiveProse] or 0) + 1
+            end
+        end
+    end
+
+    for qKey, rec in pairs(ns.db.quests) do
+        if type(rec) == "table" then
+            if rec.description and (descCounts[rec.description] or 0) > 1 then
+                rec.description = nil
+            end
+            if rec.objectiveProse and (objCounts[rec.objectiveProse] or 0) > 1 then
+                rec.objectiveProse = nil
+            end
+            if ns.RegisterSavedQuestInCodex then
+                ns.RegisterSavedQuestInCodex(qKey, rec)
+            end
+        end
+    end
+end
+
 function ns.ScanActiveQuestLog()
     if not ns.db then return end
     ns.db.quests = ns.db.quests or {}
+    ns.SanitizeDuplicateQuests()
 
     local numEntries = 0
     if C_QuestLog and C_QuestLog.GetNumQuestLogEntries then
@@ -154,8 +197,12 @@ function ns.ScanActiveQuestLog()
     if not numEntries or numEntries <= 0 or ns.IsSecret(numEntries) then return end
 
     local prevSelection = (GetQuestLogSelection and GetQuestLogSelection()) or 0
+    local prevQuestID = (C_QuestLog and C_QuestLog.GetSelectedQuest and C_QuestLog.GetSelectedQuest()) or nil
     local playerZone = ns.GetPlayerLocationData()
     local currentHeader = playerZone
+    local playerKey = ns.GetPlayerKey()
+
+    local seenDescriptions = {}
 
     for i = 1, numEntries do
         local title, questID, isHeader = nil, nil, false
@@ -183,6 +230,9 @@ function ns.ScanActiveQuestLog()
         if not isHeader and title and title ~= "" then
             local questKey = "quest:" .. title
 
+            if C_QuestLog and C_QuestLog.SetSelectedQuest and questID then
+                C_QuestLog.SetSelectedQuest(questID)
+            end
             if SelectQuestLogEntry then
                 SelectQuestLogEntry(i)
             end
@@ -190,14 +240,25 @@ function ns.ScanActiveQuestLog()
             local questDescription = nil
             local questObjectives = nil
 
+            if C_QuestLog and C_QuestLog.GetQuestDescription and questID then
+                questDescription = ns.SafeString(C_QuestLog.GetQuestDescription(questID), nil)
+            end
+
             if GetQuestLogQuestText then
                 local qDesc, qObj = GetQuestLogQuestText()
-                questDescription = ns.SafeString(qDesc, nil)
+                if not questDescription or questDescription == "" then
+                    questDescription = ns.SafeString(qDesc, nil)
+                end
                 questObjectives = ns.SafeString(qObj, nil)
             end
 
-            if (not questDescription or questDescription == "") and C_QuestLog and C_QuestLog.GetQuestDescription and questID then
-                questDescription = ns.SafeString(C_QuestLog.GetQuestDescription(questID), nil)
+            -- Guard against stale selection returning identical description across different quests
+            if questDescription and questDescription ~= "" then
+                if seenDescriptions[questDescription] and seenDescriptions[questDescription] ~= questKey then
+                    questDescription = nil
+                else
+                    seenDescriptions[questDescription] = questKey
+                end
             end
 
             local narrativeObjective = nil
@@ -209,13 +270,17 @@ function ns.ScanActiveQuestLog()
                 title = title,
                 questID = questID,
                 zone = currentHeader or playerZone,
-                character = ns.GetPlayerKey(),
+                character = playerKey,
+                characters = {},
                 faction = ns.GetPlayerFaction(),
             }
 
             record.title = title
             if questID then record.questID = questID end
             record.zone = currentHeader or record.zone or playerZone
+            record.characters = record.characters or {}
+            if record.character then record.characters[record.character] = true end
+            record.characters[playerKey] = true
 
             -- Strictly overwrite/backfill narrative description
             if questDescription and questDescription ~= "" then
@@ -237,6 +302,9 @@ function ns.ScanActiveQuestLog()
         end
     end
 
+    if prevQuestID and C_QuestLog and C_QuestLog.SetSelectedQuest then
+        C_QuestLog.SetSelectedQuest(prevQuestID)
+    end
     if prevSelection and prevSelection > 0 and SelectQuestLogEntry then
         SelectQuestLogEntry(prevSelection)
     end
@@ -325,6 +393,11 @@ local function CreateGossipArchiveButton()
 
         local zone, subzone, mapID, x, y = ns.GetPlayerLocationData()
         local gossipKey = "gossip:" .. npcName
+        local playerKey = ns.GetPlayerKey()
+        local existing = ns.db.gossip[gossipKey]
+        local chars = (existing and existing.characters) or {}
+        if existing and existing.character then chars[existing.character] = true end
+        chars[playerKey] = true
 
         local record = {
             title = "Dialogue: " .. npcName,
@@ -335,7 +408,8 @@ local function CreateGossipArchiveButton()
             mapID = mapID,
             x = x,
             y = y,
-            character = ns.GetPlayerKey(),
+            character = (existing and existing.character) or playerKey,
+            characters = chars,
             faction = ns.GetPlayerFaction(),
             time = time(),
         }

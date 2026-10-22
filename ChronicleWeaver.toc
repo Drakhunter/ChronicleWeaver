@@ -12,7 +12,6 @@
 ## X-License: MIT
 ## X-Website: https://github.com/Drakhunter/ChronicleWeaver
 ## X-Curse-Project-ID: 1759004
-## X-Wago-ID: 00000000
 
 # Core
 Core\Constants.lua

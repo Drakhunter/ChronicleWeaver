@@ -3,7 +3,7 @@
 -- Curated Classic Azeroth Zones, Dungeons, Bosses & Relics.
 -- Target Client: World of Warcraft: Forever (Interface: 16001, Client 1.60.1)
 -- =========================================================================
-local addonName, ns = ...
+local _, ns = ...
 
 ns.RawLoreClassic = {
     -- ==========================================

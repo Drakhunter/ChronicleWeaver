@@ -3,7 +3,7 @@
 -- Zone/Subzone, Target NPC, Bag Relics, and Unit/Item Tooltip hooks.
 -- Target Client: World of Warcraft: Forever (Interface: 16001, Client 1.60.1)
 -- =========================================================================
-local addonName, ns = ...
+local _, ns = ...
 
 -- -------------------------------------------------------------------------
 -- 1. Zone & Subzone Discovery Scanner
@@ -211,6 +211,7 @@ if TooltipDataProcessor and TooltipDataProcessor.AddTooltipPostCall and Enum and
                     or "Interface\\Icons\\INV_Misc_Gem_Variety_01"
 
                 local zone, subzone, mapID, x, y = ns.GetPlayerLocationData()
+                local playerKey = ns.GetPlayerKey()
 
                 local itemRecord = ns.db.items[itemKey] or {
                     itemID = itemID,
@@ -222,12 +223,16 @@ if TooltipDataProcessor and TooltipDataProcessor.AddTooltipPostCall and Enum and
                     mapID = mapID,
                     x = x,
                     y = y,
-                    character = ns.GetPlayerKey(),
+                    character = playerKey,
+                    characters = {},
                     faction = ns.GetPlayerFaction(),
                 }
                 itemRecord.title = itemName
                 itemRecord.icon = icon
                 itemRecord.flavorText = flavor
+                itemRecord.characters = itemRecord.characters or {}
+                if itemRecord.character then itemRecord.characters[itemRecord.character] = true end
+                itemRecord.characters[playerKey] = true
                 if x and x > 0 then
                     itemRecord.mapID = mapID
                     itemRecord.x = x

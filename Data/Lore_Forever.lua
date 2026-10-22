@@ -3,7 +3,7 @@
 -- Curated Forever Classic+ Dungeons, Zones, Bosses & Lore.
 -- Target Client: World of Warcraft: Forever (Interface: 16001, Client 1.60.1)
 -- =========================================================================
-local addonName, ns = ...
+local _, ns = ...
 
 ns.RawLoreForever = {
     -- ==========================================

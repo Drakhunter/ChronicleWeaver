@@ -126,6 +126,14 @@ local function OnAddonLoaded(event, loadedAddon)
     if ns.db.groupMode ~= "ZONE" and ns.db.groupMode ~= "NONE" then
         ns.db.groupMode = "ZONE"
     end
+    if ns.db.charFilter ~= "ALL" and ns.db.charFilter ~= "CURRENT" then
+        ns.db.charFilter = "ALL"
+    end
+
+    -- Auto-heal any duplicate quest descriptions before building index
+    if ns.SanitizeDuplicateQuests then
+        ns.SanitizeDuplicateQuests()
+    end
 
     -- Build runtime index from static data and hydrate saved entries
     if ns.BuildLoreIndex then
@@ -189,6 +197,11 @@ SlashCmdList["CHRONICLEWEAVER"] = function(msg)
         ns.db.spoilerFree = not ns.db.spoilerFree
         ns.Print("Spoiler-Safe Mode: " .. (ns.db.spoilerFree and "|cff4cd964Enabled|r" or "|cffff3b30Disabled|r"))
         if ns.RefreshUI then ns.RefreshUI() end
+    elseif cmd == "char" or cmd == "scope" then
+        ns.db.charFilter = (ns.db.charFilter == "CURRENT") and "ALL" or "CURRENT"
+        ns.Print("Chronicle Scope: " .. (ns.db.charFilter == "CURRENT" and ("|cff4cd964Current Character (" .. ns.GetPlayerKey() .. ")|r") or "|cffffd100Account-Wide|r"))
+        if ns.ResetListOffset then ns.ResetListOffset() end
+        if ns.RefreshUI then ns.RefreshUI() end
     elseif cmd == "toast" then
         ns.db.autoToast = not ns.db.autoToast
         ns.Print("Discovery Toasts: " .. (ns.db.autoToast and "|cff4cd964Enabled|r" or "|cffff3b30Disabled|r"))
@@ -209,6 +222,7 @@ SlashCmdList["CHRONICLEWEAVER"] = function(msg)
         print("  |cffffd100/cw|r - Open/Close the Tome")
         print("  |cffffd100/cw theme|r - Toggle between Parchment & Dark modes")
         print("  |cffffd100/cw spoilers|r - Toggle Spoiler-Safe mode")
+        print("  |cffffd100/cw scope|r - Toggle Account-Wide vs. Current Character entries")
         print("  |cffffd100/cw toast|r - Toggle Discovery Toast banners")
         print("  |cffffd100/cw scan|r - Harvest lore from active Quest Log")
     else

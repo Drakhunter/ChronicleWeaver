@@ -3,7 +3,7 @@
 -- Compiles raw static data and hydrates SavedVariables into runtime lookup maps.
 -- Target Client: World of Warcraft: Forever (Interface: 16001, Client 1.60.1)
 -- =========================================================================
-local addonName, ns = ...
+local _, ns = ...
 
 -- -------------------------------------------------------------------------
 -- Helper: Format Multi-Page Book Story
@@ -131,18 +131,22 @@ function ns.RegisterSavedBookInCodex(bookKey, bookData)
     local snippet = (firstPage:len() > 140) and (firstPage:sub(1, 137) .. "...") or firstPage
 
     local entry = {
-        key       = bookKey,
-        category  = "Book",
-        title     = bookData.title or "Archived Tome",
-        era       = "In-Game Harvest",
-        zone      = bookData.zone or "Azeroth",
-        mapID     = bookData.mapID,
-        x         = bookData.x,
-        y         = bookData.y,
-        icon      = bookData.icon or (ns.CategoryIcons and ns.CategoryIcons.Book) or "Interface\\Icons\\INV_Misc_Book_09",
-        summary   = snippet ~= "" and snippet or ("In-game book or monument recorded in " .. (bookData.zone or "Azeroth")),
-        story     = wovenStory,
-        related   = relatedKeys,
+        key         = bookKey,
+        category    = "Book",
+        title       = bookData.title or "Archived Tome",
+        era         = "In-Game Harvest",
+        zone        = bookData.zone or "Azeroth",
+        mapID       = bookData.mapID,
+        x           = bookData.x,
+        y           = bookData.y,
+        character   = bookData.character,
+        characters  = bookData.characters,
+        faction     = bookData.faction,
+        isHarvested = true,
+        icon        = bookData.icon or (ns.CategoryIcons and ns.CategoryIcons.Book) or "Interface\\Icons\\INV_Misc_Book_09",
+        summary     = snippet ~= "" and snippet or ("In-game book or monument recorded in " .. (bookData.zone or "Azeroth")),
+        story       = wovenStory,
+        related     = relatedKeys,
     }
     return ns.UpsertRuntimeEntry(entry)
 end
@@ -176,19 +180,23 @@ function ns.RegisterSavedQuestInCodex(questKey, questData)
     local snippet = (desc:len() > 140) and (desc:sub(1, 137) .. "...") or desc
 
     local entry = {
-        key       = questKey,
-        category  = "Quest",
-        title     = questData.title or "Quest Narrative",
-        era       = "In-Game Harvest",
-        zone      = questData.zone or "Azeroth",
-        mapID     = questData.mapID,
-        x         = questData.x,
-        y         = questData.y,
-        giver     = questData.giver,
-        icon      = questData.icon or (ns.CategoryIcons and ns.CategoryIcons.Quest) or "Interface\\Icons\\INV_Misc_Note_01",
-        summary   = snippet ~= "" and snippet or ("Quest narrative recorded from " .. (questData.giver or questData.zone or "an Azerothian traveler")),
-        story     = wovenStory,
-        related   = relatedKeys,
+        key         = questKey,
+        category    = "Quest",
+        title       = questData.title or "Quest Narrative",
+        era         = "In-Game Harvest",
+        zone        = questData.zone or "Azeroth",
+        mapID       = questData.mapID,
+        x           = questData.x,
+        y           = questData.y,
+        giver       = questData.giver,
+        character   = questData.character,
+        characters  = questData.characters,
+        faction     = questData.faction,
+        isHarvested = true,
+        icon        = questData.icon or (ns.CategoryIcons and ns.CategoryIcons.Quest) or "Interface\\Icons\\INV_Misc_Note_01",
+        summary     = snippet ~= "" and snippet or ("Quest narrative recorded from " .. (questData.giver or questData.zone or "an Azerothian traveler")),
+        story       = wovenStory,
+        related     = relatedKeys,
     }
     return ns.UpsertRuntimeEntry(entry)
 end
@@ -203,19 +211,23 @@ function ns.RegisterSavedItemInCodex(itemKey, itemData)
     end
 
     local entry = {
-        key       = itemKey,
-        category  = "Relic",
-        title     = itemData.title or itemData.name or "Ancient Relic",
-        era       = "In-Game Harvest",
-        zone      = itemData.zone or "Azeroth",
-        mapID     = itemData.mapID,
-        x         = itemData.x,
-        y         = itemData.y,
-        itemID    = itemData.itemID,
-        icon      = itemData.icon or (ns.CategoryIcons and ns.CategoryIcons.Relic) or "Interface\\Icons\\INV_Misc_Gem_Variety_01",
-        summary   = flavor ~= "" and flavor or ("Curated relic discovered in " .. (itemData.zone or "Azeroth")),
-        story     = wovenStory,
-        related   = relatedKeys,
+        key         = itemKey,
+        category    = "Relic",
+        title       = itemData.title or itemData.name or "Ancient Relic",
+        era         = "In-Game Harvest",
+        zone        = itemData.zone or "Azeroth",
+        mapID       = itemData.mapID,
+        x           = itemData.x,
+        y           = itemData.y,
+        itemID      = itemData.itemID,
+        character   = itemData.character,
+        characters  = itemData.characters,
+        faction     = itemData.faction,
+        isHarvested = true,
+        icon        = itemData.icon or (ns.CategoryIcons and ns.CategoryIcons.Relic) or "Interface\\Icons\\INV_Misc_Gem_Variety_01",
+        summary     = flavor ~= "" and flavor or ("Curated relic discovered in " .. (itemData.zone or "Azeroth")),
+        story       = wovenStory,
+        related     = relatedKeys,
     }
     return ns.UpsertRuntimeEntry(entry)
 end
@@ -231,19 +243,23 @@ function ns.RegisterSavedGossipInCodex(gossipKey, gossipData)
 
     local snippet = (text:len() > 140) and (text:sub(1, 137) .. "...") or text
     local entry = {
-        key       = gossipKey,
-        category  = "NPC",
-        title     = gossipData.title or (gossipData.npc and ("Dialogue: " .. gossipData.npc)) or "Field Dialogue",
-        era       = "In-Game Harvest",
-        zone      = gossipData.zone or "Azeroth",
-        mapID     = gossipData.mapID,
-        x         = gossipData.x,
-        y         = gossipData.y,
-        npc       = gossipData.npc,
-        icon      = gossipData.icon or (ns.CategoryIcons and ns.CategoryIcons.Gossip) or "Interface\\Icons\\INV_Misc_Note_02",
-        summary   = snippet ~= "" and snippet or ("Field dialogue recorded from " .. (gossipData.npc or "local resident")),
-        story     = wovenStory,
-        related   = relatedKeys,
+        key         = gossipKey,
+        category    = "NPC",
+        title       = gossipData.title or (gossipData.npc and ("Dialogue: " .. gossipData.npc)) or "Field Dialogue",
+        era         = "In-Game Harvest",
+        zone        = gossipData.zone or "Azeroth",
+        mapID       = gossipData.mapID,
+        x           = gossipData.x,
+        y           = gossipData.y,
+        npc         = gossipData.npc,
+        character   = gossipData.character,
+        characters  = gossipData.characters,
+        faction     = gossipData.faction,
+        isHarvested = true,
+        icon        = gossipData.icon or (ns.CategoryIcons and ns.CategoryIcons.Gossip) or "Interface\\Icons\\INV_Misc_Note_02",
+        summary     = snippet ~= "" and snippet or ("Field dialogue recorded from " .. (gossipData.npc or "local resident")),
+        story       = wovenStory,
+        related     = relatedKeys,
     }
     return ns.UpsertRuntimeEntry(entry)
 end

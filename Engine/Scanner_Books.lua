@@ -3,7 +3,7 @@
 -- Multi-page book & plaque harvester with live ItemTextFrame HUD badge.
 -- Target Client: World of Warcraft: Forever (Interface: 16001, Client 1.60.1)
 -- =========================================================================
-local addonName, ns = ...
+local _, ns = ...
 
 -- -------------------------------------------------------------------------
 -- ItemTextFrame HUD Status Badge
@@ -126,6 +126,7 @@ local function CaptureItemText()
 
     local bookKey = "book:" .. title
     local zone, subzone, mapID, x, y = ns.GetPlayerLocationData()
+    local playerKey = ns.GetPlayerKey()
 
     -- 4. Store in SavedVariables without overwriting other pages
     local record = ns.db.books[bookKey] or {
@@ -138,10 +139,14 @@ local function CaptureItemText()
         pages = {},
         maxPage = 1,
         pageCount = 0,
-        character = ns.GetPlayerKey(),
+        character = playerKey,
+        characters = {},
         faction = ns.GetPlayerFaction(),
     }
     record.pages = record.pages or {}
+    record.characters = record.characters or {}
+    if record.character then record.characters[record.character] = true end
+    record.characters[playerKey] = true
 
     local isNewPage = not record.pages[pageNum]
     if isNewPage then
@@ -224,6 +229,7 @@ local function CheckGossipForPlaque()
     if isLore then
         local bookKey = "book:" .. title
         local zone, subzone, mapID, x, y = ns.GetPlayerLocationData()
+        local playerKey = ns.GetPlayerKey()
 
         local record = ns.db.books[bookKey] or {
             title = title,
@@ -235,10 +241,14 @@ local function CheckGossipForPlaque()
             pages = {},
             maxPage = 1,
             pageCount = 0,
-            character = ns.GetPlayerKey(),
+            character = playerKey,
+            characters = {},
             faction = ns.GetPlayerFaction(),
         }
         record.pages = record.pages or {}
+        record.characters = record.characters or {}
+        if record.character then record.characters[record.character] = true end
+        record.characters[playerKey] = true
 
         local isNew = not record.pages[1]
         record.pages[1] = text

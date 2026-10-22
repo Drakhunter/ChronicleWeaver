@@ -3,7 +3,7 @@
 -- Right-hand Tome Reader with Layered Parchment, Filigree & Medallion Frame.
 -- Target Client: World of Warcraft: Forever (Interface: 16001, Client 1.60.1)
 -- =========================================================================
-local addonName, ns = ...
+local _, ns = ...
 
 local main = ChronicleWeaverMainFrame
 local readerPanel = main and main.readerPanel
@@ -259,7 +259,7 @@ storyScrollChild:SetSize(380, 1)
 storyScrollFrame:SetScrollChild(storyScrollChild)
 readerPanel.storyScrollChild = storyScrollChild
 
-storyScrollFrame:SetScript("OnSizeChanged", function(self, width)
+storyScrollFrame:SetScript("OnSizeChanged", function(_, width)
     if width and width > 0 then
         storyScrollChild:SetWidth(width)
     end
@@ -426,7 +426,7 @@ function ns.RefreshReaderView()
             revealBtn:Hide()
             local storyText = entry.story or "No written narrative recorded for this chronicle."
             if ns.WeaveTextConnections then
-                storyText, _ = ns.WeaveTextConnections(storyText)
+                storyText = ns.WeaveTextConnections(storyText)
             end
             if isSpoilerFree then
                 storyText = storyText:gsub("|c%x%x%x%x%x%x%x%x%[(.-)%]|r", function(word)

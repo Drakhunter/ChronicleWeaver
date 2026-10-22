@@ -192,6 +192,77 @@ function ns.DeleteSavedEntry(entryKey)
     end
 end
 -- -------------------------------------------------------------------------
+-- Per-Character Discovery & Ownership Helpers
+-- -------------------------------------------------------------------------
+function ns.IsKeyUnlockedByChar(entryKey, playerKey)
+    if not entryKey or not ns.db then return false end
+    playerKey = playerKey or ns.GetPlayerKey()
+
+    local meta = ns.db.discoveredMeta and ns.db.discoveredMeta[entryKey]
+    if meta then
+        if meta.char == playerKey then
+            return true
+        end
+        if type(meta.chars) == "table" and meta.chars[playerKey] ~= nil then
+            return true
+        end
+    end
+
+    local entry = ns.LoreByKey and ns.LoreByKey[entryKey]
+    if entry then
+        if entry.character == playerKey then
+            return true
+        end
+        if type(entry.characters) == "table" and entry.characters[playerKey] then
+            return true
+        end
+    end
+
+    local savedRec = (ns.db.quests and ns.db.quests[entryKey])
+        or (ns.db.books and ns.db.books[entryKey])
+        or (ns.db.items and ns.db.items[entryKey])
+        or (ns.db.gossip and ns.db.gossip[entryKey])
+    if type(savedRec) == "table" then
+        if savedRec.character == playerKey then
+            return true
+        end
+        if type(savedRec.characters) == "table" and savedRec.characters[playerKey] then
+            return true
+        end
+    end
+
+    return false
+end
+
+function ns.IsEntryForCurrentCharacter(entry)
+    if not entry then return false end
+    if type(entry) == "string" then
+        entry = (ns.LoreByKey and ns.LoreByKey[entry]) or { key = entry }
+    end
+    if not entry.key then return false end
+
+    local playerKey = ns.GetPlayerKey()
+    if ns.IsKeyUnlockedByChar(entry.key, playerKey) then
+        return true
+    end
+
+    if entry.category == "Dossier" then
+        local clues = (ns.GetDossierClues and ns.GetDossierClues(entry.key))
+            or (ns.DossierClues and ns.DossierClues[entry.key])
+            or entry.related
+        if clues and #clues > 0 then
+            for _, cKey in ipairs(clues) do
+                if ns.IsKeyUnlockedByChar(cKey, playerKey) then
+                    return true
+                end
+            end
+        end
+    end
+
+    return false
+end
+
+-- -------------------------------------------------------------------------
 -- Entry Discovery & Unlock State
 -- -------------------------------------------------------------------------
 function ns.IsEntryUnlocked(entry)
@@ -200,6 +271,10 @@ function ns.IsEntryUnlocked(entry)
         entry = (ns.LoreByKey and ns.LoreByKey[entry]) or { key = entry }
     end
     if not entry.key then return false end
+
+    if ns.db and ns.db.charFilter == "CURRENT" then
+        return ns.IsEntryForCurrentCharacter(entry)
+    end
 
     -- Dossier unlock rule:
     -- A Dossier is unlocked if ns.db.discovered[entry.key] is true
@@ -232,17 +307,32 @@ function ns.UnlockEntry(entryKey)
     local entry = ns.LoreByKey and ns.LoreByKey[entryKey]
     if not entry then return end
 
+    local now = time()
+    local playerKey = ns.GetPlayerKey()
+    local playerFaction = ns.GetPlayerFaction()
+
     local isNew = false
     if not ns.db.discovered[entryKey] then
-        ns.db.discovered[entryKey] = time()
+        ns.db.discovered[entryKey] = now
         isNew = true
-        ns.db.discoveredMeta = ns.db.discoveredMeta or {}
-        ns.db.discoveredMeta[entryKey] = {
-            char = ns.GetPlayerKey(),
-            faction = ns.GetPlayerFaction(),
-            time = time(),
-        }
     end
+
+    ns.db.discoveredMeta = ns.db.discoveredMeta or {}
+    local meta = ns.db.discoveredMeta[entryKey]
+    if type(meta) ~= "table" then
+        meta = {
+            char = playerKey,
+            faction = playerFaction,
+            time = now,
+            chars = {},
+        }
+        ns.db.discoveredMeta[entryKey] = meta
+    end
+    meta.chars = meta.chars or {}
+    if meta.char and not meta.chars[meta.char] then
+        meta.chars[meta.char] = meta.time or now
+    end
+    meta.chars[playerKey] = meta.chars[playerKey] or now
 
     ns.currentContextKey = entryKey
 

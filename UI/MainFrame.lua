@@ -3,7 +3,7 @@
 -- 980x660 resizable window shell, sleek journal tabs & dark-bronze controls.
 -- Target Client: World of Warcraft: Forever (Interface: 16001, Client 1.60.1)
 -- =========================================================================
-local addonName, ns = ...
+local _, ns = ...
 
 ns.activeCategory = "Zone"
 ns.searchQuery = ""
@@ -212,7 +212,7 @@ factionBtn:SetScript("OnLeave", function() GameTooltip:Hide() end)
 main.factionBtn = factionBtn
 
 -- Grouping Mode Cycle Button ("Group: Zone/Flat")
-local groupBtn = CreateJournalUtilityButton(main, 100, 22, "Group: Zone")
+local groupBtn = CreateJournalUtilityButton(main, 96, 22, "Group: Zone")
 groupBtn:SetPoint("RIGHT", factionBtn, "LEFT", -6, 0)
 groupBtn:SetScript("OnClick", function()
     if not ns.db then return end
@@ -233,6 +233,31 @@ groupBtn:SetScript("OnEnter", function(self)
 end)
 groupBtn:SetScript("OnLeave", function() GameTooltip:Hide() end)
 main.groupBtn = groupBtn
+
+-- Scope Toggle Button ("Scope: Account" vs. "Scope: Char")
+local charBtn = CreateJournalUtilityButton(main, 108, 22, "Scope: Account")
+charBtn:SetPoint("RIGHT", groupBtn, "LEFT", -6, 0)
+charBtn:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+charBtn:SetScript("OnClick", function(_, button)
+    if not ns.db then return end
+    if button == "RightButton" then
+        ns.db.charFilter = "ALL"
+    else
+        local cur = ns.db.charFilter or "ALL"
+        ns.db.charFilter = (cur == "CURRENT") and "ALL" or "CURRENT"
+    end
+    if ns.ResetListOffset then ns.ResetListOffset() end
+    if ns.RefreshUI then ns.RefreshUI() end
+end)
+charBtn:SetScript("OnEnter", function(self)
+    GameTooltip:SetOwner(self, "ANCHOR_TOP")
+    GameTooltip:SetText("Character vs. Account Scope", 1, 0.82, 0.45)
+    GameTooltip:AddLine("Left-Click: Toggle between Account-Wide and Current Character (" .. (ns.GetPlayerKey and ns.GetPlayerKey() or "Player") .. ")", 0.9, 0.9, 0.9, true)
+    GameTooltip:AddLine("Right-Click: Reset to Account-Wide", 0.65, 0.65, 0.65)
+    GameTooltip:Show()
+end)
+charBtn:SetScript("OnLeave", function() GameTooltip:Hide() end)
+main.charBtn = charBtn
 
 -- -------------------------------------------------------------------------
 -- Category Navigation Bar (7 Strict Category Tabs)

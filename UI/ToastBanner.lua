@@ -3,7 +3,7 @@
 -- Animated discovery fanfare banner with icon frame and click-to-open.
 -- Target Client: World of Warcraft: Forever (Interface: 16001, Client 1.60.1)
 -- =========================================================================
-local addonName, ns = ...
+local _, ns = ...
 
 local toast = CreateFrame("Button", "ChronicleWeaverToastFrame", UIParent, "BackdropTemplate")
 toast:SetSize(340, 60)

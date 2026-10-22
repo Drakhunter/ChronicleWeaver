@@ -17,8 +17,10 @@ exclude_files = {
 }
 
 ignore = {
-    "212/_.*",   -- unused arguments prefixed with underscore
-    "211/_.*",   -- unused locals prefixed with underscore
+    "212/_.*",       -- unused arguments prefixed with underscore
+    "212/self",      -- unused self argument in WoW frame script callbacks
+    "211/_.*",       -- unused locals prefixed with underscore
+    "211/addonName", -- unused addonName vararg in WoW addon files
 }
 
 -- Globals the addon defines or references across files

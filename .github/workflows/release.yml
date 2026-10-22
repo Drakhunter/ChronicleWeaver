@@ -20,9 +20,24 @@ jobs:
           fetch-depth: 0
 
       - name: Run BigWigs Packager
-        uses: BigWigsMods/packager@v2
+        shell: bash
         env:
           GITHUB_OAUTH: ${{ secrets.GITHUB_TOKEN }}
           CF_API_KEY: ${{ secrets.CF_API_KEY }}
           WAGO_API_TOKEN: ${{ secrets.WAGO_API_TOKEN }}
           WOWI_API_TOKEN: ${{ secrets.WOWI_API_TOKEN }}
+        run: |
+          set -euo pipefail
+          curl -sSL https://raw.githubusercontent.com/BigWigsMods/packager/master/release.sh -o /tmp/release.sh
+          python3 - << 'PY'
+          with open("/tmp/release.sh", "r", encoding="utf-8") as f:
+              s = f.read()
+          old_part = 'if result=$( echo "$_cf_payload" | curl -sS --retry 3 --retry-delay 10 \\\n\t\t\t-w "%{http_code}" -o "$resultfile" \\\n\t\t\t-H "x-api-token: $cf_token" \\\n\t\t\t-F "metadata=<-"'
+          new_part = '_cf_payload=$( echo "$_cf_payload" | jq -c "." )\n\tif result=$( curl -sS --retry 3 --retry-delay 10 \\\n\t\t\t-w "%{http_code}" -o "$resultfile" \\\n\t\t\t-H "x-api-token: $cf_token" \\\n\t\t\t--form-string "metadata=$_cf_payload"'
+          assert old_part in s, "Expected upload_curseforge curl block not found in release.sh"
+          s = s.replace(old_part, new_part, 1)
+          with open("/tmp/release.sh", "w", encoding="utf-8") as f:
+              f.write(s)
+          PY
+          chmod +x /tmp/release.sh
+          /tmp/release.sh

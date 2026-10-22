@@ -3,7 +3,7 @@
 -- Accordion grouped sidebar with collapsible folders, zebra striping & dynamic rows.
 -- Target Client: World of Warcraft: Forever (Interface: 16001, Client 1.60.1)
 -- =========================================================================
-local addonName, ns = ...
+local _, ns = ...
 
 ns.selectedKey = nil
 ns.listScrollOffset = 0
@@ -91,7 +91,7 @@ listScrollBar:SetScript("OnMouseWheel", function(_, delta)
     ScrollListByDelta(delta)
 end)
 
-listScrollBar:SetScript("OnValueChanged", function(self, value)
+listScrollBar:SetScript("OnValueChanged", function(_, value)
     if isUpdatingScrollBar then return end
     isUpdatingScrollBar = true
     local offset = math.floor(value + 0.5)
@@ -301,6 +301,17 @@ local function MatchesFaction(entry, filterFaction)
     return f:lower() == filterFaction:lower()
 end
 
+local function MatchesCharacter(entry, charFilter)
+    if not charFilter or charFilter == "ALL" then return true end
+    if entry.isHarvested or entry.category == "Quest" or entry.category == "Book" or entry.category == "Gossip" then
+        return ns.IsEntryForCurrentCharacter and ns.IsEntryForCurrentCharacter(entry) or false
+    end
+    if ns.db and ns.db.spoilerFree then
+        return ns.IsEntryForCurrentCharacter and ns.IsEntryForCurrentCharacter(entry) or false
+    end
+    return true
+end
+
 local function FilterAndSortEntries()
     local filtered = {}
     local activeCat = ns.activeCategory or "Zone"
@@ -310,6 +321,7 @@ local function FilterAndSortEntries()
     end
     local query = ns.searchQuery or ""
     local factionFilter = (ns.db and ns.db.factionFilter) or "ALL"
+    local charFilter = (ns.db and ns.db.charFilter) or "ALL"
     local isSpoilerFree = (ns.db and ns.db.spoilerFree == true)
 
     if ns.LoreEntries then
@@ -319,9 +331,7 @@ local function FilterAndSortEntries()
             end
 
             -- 1. Strict Spoiler-Safe filtering: skip undiscovered entries completely
-            if isSpoilerFree and not (ns.IsEntryUnlocked and ns.IsEntryUnlocked(entry)) then
-                -- Skip entry completely so it does not appear in filteredEntries or group counts
-            else
+            if not isSpoilerFree or (ns.IsEntryUnlocked and ns.IsEntryUnlocked(entry)) then
                 local catMatch = (entry.category == activeCat)
                     or (activeCat == "NPC" and entry.category == "Gossip")
                 local queryMatch = (query == "")
@@ -329,8 +339,9 @@ local function FilterAndSortEntries()
                     or (entry.summary and entry.summary:lower():find(query, 1, true))
                     or (entry.zone and entry.zone:lower():find(query, 1, true))
                 local factionMatch = MatchesFaction(entry, factionFilter)
+                local charMatch = MatchesCharacter(entry, charFilter)
 
-                if catMatch and queryMatch and factionMatch then
+                if catMatch and queryMatch and factionMatch and charMatch then
                     table.insert(filtered, entry)
                 end
             end
@@ -672,6 +683,15 @@ function ns.RefreshUI()
             main.groupBtn:SetText("Group: Zone")
         else
             main.groupBtn:SetText("Group: Flat")
+        end
+    end
+
+    if main.charBtn then
+        local cMode = (ns.db and ns.db.charFilter) or "ALL"
+        if cMode == "CURRENT" then
+            main.charBtn:SetText("Scope: |cff4cd964Char|r")
+        else
+            main.charBtn:SetText("Scope: Account")
         end
     end
 

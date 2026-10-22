@@ -3,7 +3,7 @@
 -- Dual-theme visual skin manager (Archivist Parchment vs. Midnight Obsidian).
 -- Target Client: World of Warcraft: Forever (Interface: 16001, Client 1.60.1)
 -- =========================================================================
-local addonName, ns = ...
+local _, ns = ...
 
 function ns.GetActiveTheme()
     local themeKey = (ns.db and ns.db.theme) or "PARCHMENT"
