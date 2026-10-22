@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <radialGradient id="agedPaper" cx="50%" cy="48%" r="65%">
+      <stop offset="0%" stop-color="#fff8e7" stop-opacity="0.12"/>
+      <stop offset="65%" stop-color="#c9a66b" stop-opacity="0.18"/>
+      <stop offset="90%" stop-color="#5c3a18" stop-opacity="0.48"/>
+      <stop offset="100%" stop-color="#241305" stop-opacity="0.78"/>
+    </radialGradient>
+    <linearGradient id="topShadow" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1a0f05" stop-opacity="0.45"/>
+      <stop offset="8%" stop-color="#1a0f05" stop-opacity="0"/>
+      <stop offset="92%" stop-color="#1a0f05" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#1a0f05" stop-opacity="0.45"/>
+    </linearGradient>
+  </defs>
+  <!-- Soft Aged Edge Vignette -->
+  <rect width="512" height="512" fill="url(#agedPaper)"/>
+  <rect width="512" height="512" fill="url(#topShadow)"/>
+  <!-- Inner Double Filigree Hairline Border -->
+  <rect x="8" y="8" width="496" height="496" fill="none" stroke="#8a6226" stroke-width="1.5" opacity="0.45"/>
+  <rect x="12" y="12" width="488" height="488" fill="none" stroke="#d4a85a" stroke-width="1" opacity="0.35"/>
+</svg>

@@ -1,0 +1,30 @@
+# Build & Release Output
+dist/
+.release/
+*.zip
+
+# Node / Asset Tooling
+node_modules/
+Media/node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Editor & IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*.bak
+*~
+
+# OS Generated Files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Local Scratch & Environment
+.env
+.env.*
+scratch/
+tmp/

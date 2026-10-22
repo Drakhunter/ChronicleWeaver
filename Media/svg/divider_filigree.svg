@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 32" width="512" height="32">
+  <defs>
+    <linearGradient id="goldHGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#8a6226" stop-opacity="0"/>
+      <stop offset="20%" stop-color="#b88628" stop-opacity="0.6"/>
+      <stop offset="50%" stop-color="#ffd56b" stop-opacity="1"/>
+      <stop offset="80%" stop-color="#b88628" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#8a6226" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="goldVGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffe494"/>
+      <stop offset="50%" stop-color="#c99732"/>
+      <stop offset="100%" stop-color="#593b0a"/>
+    </linearGradient>
+  </defs>
+  <!-- Center Filigree Diamond Motif -->
+  <path d="M 256,4 L 268,16 L 256,28 L 244,16 Z" fill="url(#goldVGrad)" stroke="#422906" stroke-width="1"/>
+  <circle cx="256" cy="16" r="3.5" fill="#ffeebd"/>
+
+  <!-- Flanking Diamond Studs -->
+  <path d="M 234,11 L 239,16 L 234,21 L 229,16 Z" fill="url(#goldVGrad)"/>
+  <path d="M 278,11 L 283,16 L 278,21 L 273,16 Z" fill="url(#goldVGrad)"/>
+
+  <!-- Tapered Filigree Lines Left & Right -->
+  <line x1="20" y1="16" x2="224" y2="16" stroke="url(#goldHGrad)" stroke-width="1.8"/>
+  <line x1="50" y1="13" x2="210" y2="13" stroke="url(#goldHGrad)" stroke-width="0.8" opacity="0.6"/>
+  <line x1="50" y1="19" x2="210" y2="19" stroke="url(#goldHGrad)" stroke-width="0.8" opacity="0.6"/>
+
+  <line x1="288" y1="16" x2="492" y2="16" stroke="url(#goldHGrad)" stroke-width="1.8"/>
+  <line x1="302" y1="13" x2="462" y2="13" stroke="url(#goldHGrad)" stroke-width="0.8" opacity="0.6"/>
+  <line x1="302" y1="19" x2="462" y2="19" stroke="url(#goldHGrad)" stroke-width="0.8" opacity="0.6"/>
+
+  <!-- Subtle Scrollwork Knots -->
+  <path d="M 216,16 Q 222,8 226,16 Q 222,24 216,16 Z" fill="none" stroke="#d4a85a" stroke-width="1"/>
+  <path d="M 296,16 Q 290,8 286,16 Q 290,24 296,16 Z" fill="none" stroke="#d4a85a" stroke-width="1"/>
+</svg>

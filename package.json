@@ -1,0 +1,16 @@
+{
+  "name": "chronicleweaver",
+  "version": "1.0.0",
+  "description": "A context-aware lore codex for **World of Warcraft: Forever** (Interface `16001`). As you play, it discovers lore for zones, NPCs and relics. It also harvests every multi-page book, scroll and plaque you read into a searchable in-game journal, with your own field notes for each entry.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "sharp": "^0.35.5"
+  }
+}

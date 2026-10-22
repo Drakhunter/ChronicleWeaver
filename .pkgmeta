@@ -1,0 +1,33 @@
+package-as: ChronicleWeaver
+enable-nolib-creation: no
+
+manual-changelog:
+  filename: CHANGELOG.md
+  markup-type: markdown
+
+ignore:
+  - .github
+  - .gitignore
+  - .editorconfig
+  - .luacheckrc
+  - .pkgmeta
+  - build.ps1
+  - package.json
+  - package-lock.json
+  - README.md
+  - CHANGELOG.md
+  - Docs
+  - Locales
+  - Modules
+  - Data/WoWForever_Zones_Dungeons.lua
+  - UI/CodexFrame.lua
+  - UI/Settings.lua
+  - UI/Templates.xml
+  - UI/Theme.lua
+  - UI/Toast.lua
+  - Media/svg
+  - Media/logo.png
+  - Media/package.json
+  - Media/package-lock.json
+  - Media/node_modules
+  - dist

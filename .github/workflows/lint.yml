@@ -1,0 +1,35 @@
+name: CI Lint & TOC Check
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  lint:
+    name: Luacheck & TOC Integrity
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Run Luacheck
+        uses: lunarmodules/luacheck@v1
+        with:
+          args: .
+
+      - name: Verify All TOC Files Exist
+        shell: bash
+        run: |
+          set -euo pipefail
+          while IFS= read -r line; do
+            line="${line%$'\r'}"
+            [[ -z "$line" || "$line" =~ ^# ]] && continue
+            path="${line//\\//}"
+            if [[ ! -f "$path" ]]; then
+              echo "ERROR: Missing file referenced in ChronicleWeaver.toc: $path"
+              exit 1
+            fi
+            echo "Verified: $path"
+          done < ChronicleWeaver.toc

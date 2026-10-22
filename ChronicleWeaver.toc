@@ -1,0 +1,40 @@
+## Interface: 16001
+## Title: ChronicleWeaver |cffd4a85a[Forever Lore Codex]|r
+## Notes: Investigative lore codex, Grand Archivist Dossiers, multi-page book harvester, and personal field journal for WoW: Forever.
+## Author: TheOnlyCthulhu
+## Version: 1.2.0
+## SavedVariables: ChronicleWeaverDB
+## IconTexture: Interface\AddOns\ChronicleWeaver\Media\logo
+## AddonCompartmentFunc: ChronicleWeaver_OnAddonCompartmentClick
+## AddonCompartmentFuncOnEnter: ChronicleWeaver_OnAddonCompartmentEnter
+## AddonCompartmentFuncOnLeave: ChronicleWeaver_OnAddonCompartmentLeave
+## X-Category: Quests & Leveling, Roleplay, Map & Minimap
+## X-License: MIT
+## X-Website: https://github.com/TheOnlyCthulhu/ChronicleWeaver
+## X-Curse-Project-ID: 000000
+## X-Wago-ID: 00000000
+
+# Core
+Core\Constants.lua
+Core\Utils.lua
+Core\Init.lua
+
+# Data
+Data\Lore_Classic.lua
+Data\Lore_Forever.lua
+Data\Lore_Topics.lua
+Data\IndexBuilder.lua
+
+# Engine
+Engine\WeaveEngine.lua
+Engine\Scanner_World.lua
+Engine\Scanner_Books.lua
+Engine\Scanner_Quests.lua
+
+# UI
+UI\ThemeEngine.lua
+UI\ToastBanner.lua
+UI\MainFrame.lua
+UI\SidebarList.lua
+UI\ReaderView.lua
+UI\DossierView.lua
