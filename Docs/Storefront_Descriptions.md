@@ -23,7 +23,8 @@ Use the pre-formatted metadata, descriptions, and tags below when setting up **G
 - **Addon Project ID Setup**:
   Once you create your project on CurseForge and Wago, paste the numeric IDs into [`ChronicleWeaver.toc`](../ChronicleWeaver.toc):
   ```ini
-  ## X-Curse-Project-ID: YOUR_CURSE_ID
+  ## X-Website: https://github.com/Drakhunter/ChronicleWeaver
+  ## X-Curse-Project-ID: 1759004
   ## X-Wago-ID: YOUR_WAGO_ID
   ```
 - **GitHub Actions Secrets** (`Settings -> Secrets and variables -> Actions`):

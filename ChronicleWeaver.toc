@@ -10,8 +10,8 @@
 ## AddonCompartmentFuncOnLeave: ChronicleWeaver_OnAddonCompartmentLeave
 ## X-Category: Quests & Leveling, Roleplay, Map & Minimap
 ## X-License: MIT
-## X-Website: https://github.com/TheOnlyCthulhu/ChronicleWeaver
-## X-Curse-Project-ID: 000000
+## X-Website: https://github.com/Drakhunter/ChronicleWeaver
+## X-Curse-Project-ID: 1759004
 ## X-Wago-ID: 00000000
 
 # Core
