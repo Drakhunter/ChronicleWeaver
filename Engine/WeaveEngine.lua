@@ -26,15 +26,6 @@ local function MakeCaseInsensitivePattern(pattern)
     return p
 end
 
-local function MatchesKeywordInText(text, keyword)
-    if not text or type(text) ~= "string" or not keyword or #keyword < 3 then
-        return false
-    end
-    local escapedKw = keyword:gsub("[%^%$%(%)%%%.%[%]%*%+%-%?]", "%%%1"):lower()
-    local pat = "%f[%a]" .. escapedKw .. "%f[%A]"
-    return text:lower():match(pat) ~= nil
-end
-
 local function EntryMatchesDossierZones(dossierZones, entryZone)
     if not dossierZones or #dossierZones == 0 then return true end
     if not entryZone or entryZone == "" or entryZone == "Unknown" or entryZone == "Azeroth" then
@@ -70,7 +61,12 @@ local function BuildWeavableCandidates()
                     local lval = val:lower()
                     if not seen[lval] then
                         seen[lval] = true
-                        table.insert(list, { phrase = val, key = entry.key })
+                        local pat = MakeCaseInsensitivePattern(val)
+                        table.insert(list, {
+                            phrase = val,
+                            key = entry.key,
+                            frontierPat = "%f[%a](" .. pat .. ")%f[%A]",
+                        })
                     end
                 end
 
@@ -80,7 +76,12 @@ local function BuildWeavableCandidates()
                     local ltitle = cleanTitle:lower()
                     if #cleanTitle >= 3 and not seen[ltitle] then
                         seen[ltitle] = true
-                        table.insert(list, { phrase = cleanTitle, key = entry.key })
+                        local pat = MakeCaseInsensitivePattern(cleanTitle)
+                        table.insert(list, {
+                            phrase = cleanTitle,
+                            key = entry.key,
+                            frontierPat = "%f[%a](" .. pat .. ")%f[%A]",
+                        })
                     end
                 end
             end
@@ -96,7 +97,12 @@ local function BuildWeavableCandidates()
                         local lkw = kw:lower()
                         if not seen[lkw] then
                             seen[lkw] = true
-                            table.insert(list, { phrase = kw, key = topic.key })
+                            local pat = MakeCaseInsensitivePattern(kw)
+                            table.insert(list, {
+                                phrase = kw,
+                                key = topic.key,
+                                frontierPat = "%f[%a](" .. pat .. ")%f[%A]",
+                            })
                         end
                     end
                 end
@@ -112,6 +118,8 @@ local function BuildWeavableCandidates()
     cachedCandidates = list
     return cachedCandidates
 end
+
+ns.BuildWeavableCandidates = BuildWeavableCandidates
 
 function ns.InvalidateWeaveCache()
     cachedCandidates = nil
@@ -149,8 +157,7 @@ function ns.WeaveTextConnections(rawText)
         end
 
         if canHighlight then
-            local pat = MakeCaseInsensitivePattern(cand.phrase)
-            local frontierPat = "%f[%a](" .. pat .. ")%f[%A]"
+            local frontierPat = cand.frontierPat
 
             if wovenText:match(frontierPat) then
                 if not seenKeys[cand.key] then
@@ -180,6 +187,37 @@ end
 -- -------------------------------------------------------------------------
 -- 2. Rebuild Bi-Directional Backlinks & Topic Dossier Clusters
 -- -------------------------------------------------------------------------
+local function GetEntrySearchLower(entry)
+    if entry._searchLower then
+        return entry._searchLower, entry._titleLower
+    end
+    local parts = {}
+    if entry.title and entry.title ~= "" then parts[#parts + 1] = entry.title end
+    if entry.summary and entry.summary ~= "" then parts[#parts + 1] = entry.summary end
+    if entry.story and entry.story ~= "" then parts[#parts + 1] = entry.story end
+    if entry.npc and entry.npc ~= "" then parts[#parts + 1] = entry.npc end
+    if entry.zone and entry.zone ~= "" then parts[#parts + 1] = entry.zone end
+    entry._searchLower = table.concat(parts, " "):lower()
+    entry._titleLower = (entry.title or ""):lower()
+    return entry._searchLower, entry._titleLower
+end
+
+local function GetDossierCompiledPatterns(dossier)
+    if dossier._compiledPatterns then
+        return dossier._compiledPatterns
+    end
+    local patterns = {}
+    local keywords = dossier.keywords or {}
+    for _, kw in ipairs(keywords) do
+        if type(kw) == "string" and #kw >= 3 then
+            local escapedKw = kw:gsub("[%^%$%(%)%%%.%[%]%*%+%-%?]", "%%%1"):lower()
+            table.insert(patterns, "%f[%a]" .. escapedKw .. "%f[%A]")
+        end
+    end
+    dossier._compiledPatterns = patterns
+    return patterns
+end
+
 function ns.RebuildLoreWeb()
     ns.InvalidateWeaveCache()
 
@@ -188,28 +226,29 @@ function ns.RebuildLoreWeb()
 
     if not ns.LoreEntries then return end
 
+    local backlinksSet = {}
+
     -- 1. Initialize backlink tables for all registered entries
     for _, entry in ipairs(ns.LoreEntries) do
         ns.Backlinks[entry.key] = {}
+        backlinksSet[entry.key] = {}
+    end
+
+    local function AddBacklink(targetKey, sourceKey)
+        if not targetKey or not sourceKey or targetKey == sourceKey then return end
+        ns.Backlinks[targetKey] = ns.Backlinks[targetKey] or {}
+        backlinksSet[targetKey] = backlinksSet[targetKey] or {}
+        if not backlinksSet[targetKey][sourceKey] then
+            backlinksSet[targetKey][sourceKey] = true
+            table.insert(ns.Backlinks[targetKey], sourceKey)
+        end
     end
 
     -- 2. Bi-directional backlinks from explicit 'related' references
     for _, entry in ipairs(ns.LoreEntries) do
         if entry.related and type(entry.related) == "table" then
             for _, targetKey in ipairs(entry.related) do
-                if targetKey and targetKey ~= entry.key then
-                    ns.Backlinks[targetKey] = ns.Backlinks[targetKey] or {}
-                    local alreadyLinked = false
-                    for _, existingKey in ipairs(ns.Backlinks[targetKey]) do
-                        if existingKey == entry.key then
-                            alreadyLinked = true
-                            break
-                        end
-                    end
-                    if not alreadyLinked then
-                        table.insert(ns.Backlinks[targetKey], entry.key)
-                    end
-                end
+                AddBacklink(targetKey, entry.key)
             end
         end
     end
@@ -225,22 +264,24 @@ function ns.RebuildLoreWeb()
     for _, dossier in ipairs(dossiers) do
         local dKey = dossier.key
         ns.DossierClues[dKey] = {}
-        dossier.related = dossier.related or {}
+
+        -- Preserve the pristine initial seed related list without runaway array expansion
+        dossier._seedRelated = dossier._seedRelated or dossier.related or {}
         local cluesMap = {}
 
-        -- Seed with existing related keys
-        for _, relKey in ipairs(dossier.related) do
+        -- Seed with initial related keys
+        for _, relKey in ipairs(dossier._seedRelated) do
             if not cluesMap[relKey] and (not ns.LoreByKey or ns.LoreByKey[relKey]) then
                 cluesMap[relKey] = true
                 table.insert(ns.DossierClues[dKey], relKey)
             end
         end
 
-        local keywords = dossier.keywords or {}
+        local compiledPatterns = GetDossierCompiledPatterns(dossier)
         local dZones = dossier.zones
         local hasDossierZones = (dZones and #dZones > 0)
 
-        if #keywords > 0 then
+        if #compiledPatterns > 0 then
             for _, entry in ipairs(ns.LoreEntries) do
                 if entry.key ~= dKey and entry.category ~= "Dossier" and not cluesMap[entry.key] then
                     local hasKnownZone = entry.zone and entry.zone ~= "" and entry.zone ~= "Unknown" and entry.zone ~= "Azeroth"
@@ -249,16 +290,14 @@ function ns.RebuildLoreWeb()
                         inZone = EntryMatchesDossierZones(dZones, entry.zone)
                     end
 
+                    local searchLower, titleLower = GetEntrySearchLower(entry)
                     local matched = false
+
                     if inZone then
                         -- Entry's zone matches dossier's zones (or zone is generic):
                         -- scan title, summary, story, npc, and zone using whole-word frontier matching
-                        for _, kw in ipairs(keywords) do
-                            if MatchesKeywordInText(entry.title, kw)
-                                or MatchesKeywordInText(entry.summary, kw)
-                                or MatchesKeywordInText(entry.story, kw)
-                                or MatchesKeywordInText(entry.npc, kw)
-                                or MatchesKeywordInText(entry.zone, kw) then
+                        for _, pat in ipairs(compiledPatterns) do
+                            if searchLower:match(pat) then
                                 matched = true
                                 break
                             end
@@ -266,8 +305,8 @@ function ns.RebuildLoreWeb()
                     else
                         -- Candidate entry is known to be in an outside zone:
                         -- ONLY match if candidate title explicitly contains one of the proper-noun keywords!
-                        for _, kw in ipairs(keywords) do
-                            if MatchesKeywordInText(entry.title, kw) then
+                        for _, pat in ipairs(compiledPatterns) do
+                            if titleLower:match(pat) then
                                 matched = true
                                 break
                             end
@@ -277,7 +316,6 @@ function ns.RebuildLoreWeb()
                     if matched then
                         cluesMap[entry.key] = true
                         table.insert(ns.DossierClues[dKey], entry.key)
-                        table.insert(dossier.related, entry.key)
                     end
                 end
             end
@@ -285,22 +323,32 @@ function ns.RebuildLoreWeb()
 
         -- Ensure bi-directional backlinks point back to the Dossier from each clue
         for _, clueKey in ipairs(ns.DossierClues[dKey]) do
-            ns.Backlinks[clueKey] = ns.Backlinks[clueKey] or {}
-            local hasDossier = false
-            for _, bKey in ipairs(ns.Backlinks[clueKey]) do
-                if bKey == dKey then
-                    hasDossier = true
-                    break
-                end
-            end
-            if not hasDossier then
-                table.insert(ns.Backlinks[clueKey], dKey)
-            end
+            AddBacklink(clueKey, dKey)
         end
     end
 
     if ns.SendMessage then
         ns.SendMessage("LORE_WEB_REBUILT")
+    end
+end
+
+-- -------------------------------------------------------------------------
+-- 3. Debounced Lore Web Rebuild Scheduler
+-- -------------------------------------------------------------------------
+local loreWebRebuildTimer = nil
+function ns.ScheduleLoreWebRebuild(delay)
+    delay = delay or 0.5
+    if loreWebRebuildTimer and loreWebRebuildTimer.Cancel then
+        loreWebRebuildTimer:Cancel()
+        loreWebRebuildTimer = nil
+    end
+    if C_Timer and C_Timer.After then
+        C_Timer.After(delay, function()
+            loreWebRebuildTimer = nil
+            ns.RebuildLoreWeb()
+        end)
+    else
+        ns.RebuildLoreWeb()
     end
 end
 

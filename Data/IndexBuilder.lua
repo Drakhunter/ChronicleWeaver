@@ -53,6 +53,8 @@ function ns.UpsertRuntimeEntry(entryObj)
 
     local existing = ns.LoreByKey and ns.LoreByKey[entryObj.key]
     if existing then
+        existing._searchLower = nil
+        existing._titleLower = nil
         for k, v in pairs(entryObj) do
             existing[k] = v
         end
@@ -174,7 +176,18 @@ function ns.RegisterSavedQuestInCodex(questKey, questData)
         table.insert(storyParts, "|cffffd100[Resolution]|r\n" .. questData.resolution)
     end
 
+    local existing = ns.LoreByKey and ns.LoreByKey[questKey]
     local rawStory = table.concat(storyParts, "\n\n")
+
+    if existing and existing._rawStory == rawStory and existing.giver == questData.giver then
+        if questData.character then existing.character = questData.character end
+        if questData.characters then existing.characters = questData.characters end
+        if questData.mapID then existing.mapID = questData.mapID end
+        if questData.x then existing.x = questData.x end
+        if questData.y then existing.y = questData.y end
+        return existing
+    end
+
     local wovenStory = rawStory
     local relatedKeys = {}
     if ns.WeaveTextConnections then
@@ -202,6 +215,7 @@ function ns.RegisterSavedQuestInCodex(questKey, questData)
         summary     = snippet ~= "" and snippet or ("Quest narrative recorded from " .. (questData.giver or questData.zone or "an Azerothian traveler")),
         story       = wovenStory,
         related     = relatedKeys,
+        _rawStory   = rawStory,
     }
     return ns.UpsertRuntimeEntry(entry)
 end

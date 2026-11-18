@@ -138,10 +138,7 @@ local function OnAddonLoaded(event, loadedAddon)
     -- Build runtime index from static data and hydrate saved entries
     if ns.BuildLoreIndex then
         ns.BuildLoreIndex()
-    end
-
-    -- Build bi-directional backlinks and topic clusters
-    if ns.RebuildLoreWeb then
+    elseif ns.RebuildLoreWeb then
         ns.RebuildLoreWeb()
     end
 

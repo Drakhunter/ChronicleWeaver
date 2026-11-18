@@ -50,7 +50,13 @@ local function OnQuestDetail()
     local questKey = "quest:" .. title
     local playerKey = ns.GetPlayerKey()
 
-    local record = ns.db.quests[questKey] or {
+    local existing = ns.db.quests[questKey]
+    if existing and existing.description == questText and existing.characters and existing.characters[playerKey] then
+        -- Already recorded with identical description for this character
+        return
+    end
+
+    local record = existing or {
         title = title,
         giver = giver,
         zone = zone,
@@ -82,7 +88,9 @@ local function OnQuestDetail()
     if ns.RegisterSavedQuestInCodex then
         ns.RegisterSavedQuestInCodex(questKey, record)
     end
-    if ns.RebuildLoreWeb then
+    if ns.ScheduleLoreWebRebuild then
+        ns.ScheduleLoreWebRebuild(1.0)
+    elseif ns.RebuildLoreWeb then
         ns.RebuildLoreWeb()
     end
     ns.UnlockEntry(questKey)
@@ -129,13 +137,20 @@ local function OnQuestComplete()
     record.characters[playerKey] = true
 
     local isNewResolution = not record.resolution or record.resolution ~= rewardText
+    if not isNewResolution and record.characters[playerKey] then
+        -- Already recorded this resolution and character is credited
+        return
+    end
+
     record.resolution = rewardText
     ns.db.quests[questKey] = record
 
     if ns.RegisterSavedQuestInCodex then
         ns.RegisterSavedQuestInCodex(questKey, record)
     end
-    if ns.RebuildLoreWeb then
+    if ns.ScheduleLoreWebRebuild then
+        ns.ScheduleLoreWebRebuild(1.0)
+    elseif ns.RebuildLoreWeb then
         ns.RebuildLoreWeb()
     end
     ns.UnlockEntry(questKey)
@@ -167,25 +182,32 @@ function ns.SanitizeDuplicateQuests()
         end
     end
 
+    local anyModified = false
     for qKey, rec in pairs(ns.db.quests) do
         if type(rec) == "table" then
+            local modified = false
             if rec.description and (descCounts[rec.description] or 0) > 1 then
                 rec.description = nil
+                modified = true
             end
             if rec.objectiveProse and (objCounts[rec.objectiveProse] or 0) > 1 then
                 rec.objectiveProse = nil
+                modified = true
             end
-            if ns.RegisterSavedQuestInCodex then
-                ns.RegisterSavedQuestInCodex(qKey, rec)
+            if modified then
+                anyModified = true
+                if ns.RegisterSavedQuestInCodex then
+                    ns.RegisterSavedQuestInCodex(qKey, rec)
+                end
             end
         end
     end
+    return anyModified
 end
 
 function ns.ScanActiveQuestLog()
     if not ns.db then return end
     ns.db.quests = ns.db.quests or {}
-    ns.SanitizeDuplicateQuests()
 
     local numEntries = 0
     if C_QuestLog and C_QuestLog.GetNumQuestLogEntries then
@@ -203,6 +225,8 @@ function ns.ScanActiveQuestLog()
     local playerKey = ns.GetPlayerKey()
 
     local seenDescriptions = {}
+    local anyNew = false
+    local selectionChanged = false
 
     for i = 1, numEntries do
         local title, questID, isHeader = nil, nil, false
@@ -229,97 +253,133 @@ function ns.ScanActiveQuestLog()
 
         if not isHeader and title and title ~= "" then
             local questKey = "quest:" .. title
+            local existing = ns.db.quests[questKey]
 
-            if C_QuestLog and C_QuestLog.SetSelectedQuest and questID then
-                C_QuestLog.SetSelectedQuest(questID)
-            end
-            if SelectQuestLogEntry then
-                SelectQuestLogEntry(i)
-            end
+            -- Check if quest is already recorded with full description and credited to this character
+            local isAlreadyRecorded = existing
+                and existing.description
+                and existing.description ~= ""
+                and existing.characters
+                and existing.characters[playerKey]
 
-            local questDescription = nil
-            local questObjectives = nil
-
-            if C_QuestLog and C_QuestLog.GetQuestDescription and questID then
-                questDescription = ns.SafeString(C_QuestLog.GetQuestDescription(questID), nil)
-            end
-
-            if GetQuestLogQuestText then
-                local qDesc, qObj = GetQuestLogQuestText()
-                if not questDescription or questDescription == "" then
-                    questDescription = ns.SafeString(qDesc, nil)
+            if not isAlreadyRecorded then
+                if C_QuestLog and C_QuestLog.SetSelectedQuest and questID then
+                    C_QuestLog.SetSelectedQuest(questID)
+                    selectionChanged = true
                 end
-                questObjectives = ns.SafeString(qObj, nil)
-            end
-
-            -- Guard against stale selection returning identical description across different quests
-            if questDescription and questDescription ~= "" then
-                if seenDescriptions[questDescription] and seenDescriptions[questDescription] ~= questKey then
-                    questDescription = nil
-                else
-                    seenDescriptions[questDescription] = questKey
+                if SelectQuestLogEntry then
+                    SelectQuestLogEntry(i)
+                    selectionChanged = true
                 end
+
+                local questDescription = nil
+                local questObjectives = nil
+
+                if C_QuestLog and C_QuestLog.GetQuestDescription and questID then
+                    questDescription = ns.SafeString(C_QuestLog.GetQuestDescription(questID), nil)
+                end
+
+                if GetQuestLogQuestText then
+                    local qDesc, qObj = GetQuestLogQuestText()
+                    if not questDescription or questDescription == "" then
+                        questDescription = ns.SafeString(qDesc, nil)
+                    end
+                    questObjectives = ns.SafeString(qObj, nil)
+                end
+
+                -- Guard against stale selection returning identical description across different quests
+                if questDescription and questDescription ~= "" then
+                    if seenDescriptions[questDescription] and seenDescriptions[questDescription] ~= questKey then
+                        questDescription = nil
+                    else
+                        seenDescriptions[questDescription] = questKey
+                    end
+                end
+
+                local narrativeObjective = nil
+                if questObjectives and IsNarrativeProse(questObjectives) then
+                    narrativeObjective = questObjectives
+                end
+
+                local record = existing or {
+                    title = title,
+                    questID = questID,
+                    zone = currentHeader or playerZone,
+                    character = playerKey,
+                    characters = {},
+                    faction = ns.GetPlayerFaction(),
+                }
+
+                record.title = title
+                if questID then record.questID = questID end
+                record.zone = currentHeader or record.zone or playerZone
+                record.characters = record.characters or {}
+                if record.character then record.characters[record.character] = true end
+                record.characters[playerKey] = true
+
+                -- Strictly overwrite/backfill narrative description
+                if questDescription and questDescription ~= "" then
+                    record.description = questDescription
+                end
+                if narrativeObjective and narrativeObjective ~= "" then
+                    record.objectiveProse = narrativeObjective
+                end
+
+                -- Ensure leaderboard counters are wiped if old version saved them
+                record.objectiveText = nil
+
+                ns.db.quests[questKey] = record
+
+                if ns.RegisterSavedQuestInCodex then
+                    ns.RegisterSavedQuestInCodex(questKey, record)
+                end
+                ns.UnlockEntry(questKey)
+                anyNew = true
+            elseif existing and existing.characters and not existing.characters[playerKey] then
+                -- Quest was already recorded, just mark character discovery
+                existing.characters[playerKey] = true
+                ns.UnlockEntry(questKey)
             end
-
-            local narrativeObjective = nil
-            if questObjectives and IsNarrativeProse(questObjectives) then
-                narrativeObjective = questObjectives
-            end
-
-            local record = ns.db.quests[questKey] or {
-                title = title,
-                questID = questID,
-                zone = currentHeader or playerZone,
-                character = playerKey,
-                characters = {},
-                faction = ns.GetPlayerFaction(),
-            }
-
-            record.title = title
-            if questID then record.questID = questID end
-            record.zone = currentHeader or record.zone or playerZone
-            record.characters = record.characters or {}
-            if record.character then record.characters[record.character] = true end
-            record.characters[playerKey] = true
-
-            -- Strictly overwrite/backfill narrative description
-            if questDescription and questDescription ~= "" then
-                record.description = questDescription
-            end
-            if narrativeObjective and narrativeObjective ~= "" then
-                record.objectiveProse = narrativeObjective
-            end
-
-            -- Ensure leaderboard counters are wiped if old version saved them
-            record.objectiveText = nil
-
-            ns.db.quests[questKey] = record
-
-            if ns.RegisterSavedQuestInCodex then
-                ns.RegisterSavedQuestInCodex(questKey, record)
-            end
-            ns.UnlockEntry(questKey)
         end
     end
 
-    if prevQuestID and C_QuestLog and C_QuestLog.SetSelectedQuest then
-        C_QuestLog.SetSelectedQuest(prevQuestID)
-    end
-    if prevSelection and prevSelection > 0 and SelectQuestLogEntry then
-        SelectQuestLogEntry(prevSelection)
+    if selectionChanged then
+        if prevQuestID and C_QuestLog and C_QuestLog.SetSelectedQuest then
+            C_QuestLog.SetSelectedQuest(prevQuestID)
+        end
+        if prevSelection and prevSelection > 0 and SelectQuestLogEntry then
+            SelectQuestLogEntry(prevSelection)
+        end
     end
 
-    if ns.RebuildLoreWeb then
-        ns.RebuildLoreWeb()
+    if anyNew then
+        if ns.ScheduleLoreWebRebuild then
+            ns.ScheduleLoreWebRebuild(0.5)
+        elseif ns.RebuildLoreWeb then
+            ns.RebuildLoreWeb()
+        end
     end
 end
 
 -- Alias for slash command (/cw scan or /cw quests)
 ns.ScanQuestLog = ns.ScanActiveQuestLog
 
+local pendingQuestLogScan = false
 ns.RegisterEvent("QUEST_ACCEPTED", function()
+    if pendingQuestLogScan then return end
+    pendingQuestLogScan = true
     if C_Timer and C_Timer.After then
-        C_Timer.After(0.5, ns.ScanActiveQuestLog)
+        C_Timer.After(0.3, function()
+            pendingQuestLogScan = false
+            if ns.ScanActiveQuestLog then
+                ns.ScanActiveQuestLog()
+            end
+        end)
+    else
+        pendingQuestLogScan = false
+        if ns.ScanActiveQuestLog then
+            ns.ScanActiveQuestLog()
+        end
     end
 end)
 
@@ -419,7 +479,9 @@ local function CreateGossipArchiveButton()
         if ns.RegisterSavedGossipInCodex then
             ns.RegisterSavedGossipInCodex(gossipKey, record)
         end
-        if ns.RebuildLoreWeb then
+        if ns.ScheduleLoreWebRebuild then
+            ns.ScheduleLoreWebRebuild(1.0)
+        elseif ns.RebuildLoreWeb then
             ns.RebuildLoreWeb()
         end
         ns.UnlockEntry(gossipKey)
