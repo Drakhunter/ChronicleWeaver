@@ -401,4 +401,158 @@ ns.RawLoreTopics = {
         leads = "Purge the Twilight's Hammer from Blackfathom Deeps (Levels 24-32), investigate the Silithid hives in Tanaris (Levels 40-50) and Un'Goro Crater (Levels 48-55), and report to Cenarion Hold in Silithus (Levels 55-60).",
         related = { "zone:Silithus", "zone:Un'Goro Crater", "zone:Tanaris", "zone:Thousand Needles", "zone:Feralas", "zone:Blackfathom Deeps", "zone:Shaper's Terrace", "npc:C'Thun", "npc:Aku'mai", "npc:Twilight Lord Kelris", "npc:Prime Watcher Norgal", "npc:Brann Bronzebeard", "npc:Varok Saurfang" },
     },
+
+    -- =====================================================================
+    -- 19. THE GRAND LIBRARY INITIATIVE & LIBRARY BOOKS
+    -- =====================================================================
+    {
+        key = "dossier:GrandLibrary",
+        category = "Dossier",
+        caseId = "ARCH-19",
+        classification = "Azerothian Library Initiative",
+        archivist = "Garion Wendell & Owen Thadd",
+        title = "The Grand Library Initiative & Secrets of Comprehension",
+        era = "Forever Classic+",
+        faction = "Neutral",
+        icon = "Interface\\Icons\\INV_Misc_Book_09",
+        zones = { "Stormwind City", "Undercity", "Ironforge", "Orgrimmar", "Elwynn Forest", "Westfall", "Duskwood", "Loch Modan", "Wetlands", "Tirisfal Glades", "Silverpine Forest", "The Barrens", "Eastern Plaguelands", "Western Plaguelands" },
+        keywords = { "Library Book", "Library's Collection", "Garion Wendell", "Owen Thadd", "Comprehension Charm", "Friend of the Library", "Archivist Delivery Directive" },
+        summary = "Cross-faction recovery of scattered Azerothian treatises, Highborne almanacs, and forbidden spellcraft archived in Stormwind City and Undercity.",
+        story = "Following the Third War, vast troves of magical research, Dalaran digests, and historical memoirs were left scattered across ruined inns, catacombs, and arcane towers throughout Azeroth. Seeking to preserve mortal scholarship before warlocks, cults, and scavengers could destroy it, Chief Librarian Garion Wendell in Stormwind's Wizard's Sanctum and Keeper Owen Thadd in Undercity's Magic Quarter launched parallel collection drives -- rewarding travelers with Comprehension Charms and Friend of the Library relics.",
+        synthesis = "Though Stormwind and Undercity stand on opposite sides of Azeroth's political divide, the treatises delivered to Garion Wendell and Owen Thadd form two halves of the same fragmented Kirin Tor and Highborne canon. Recovering at least 25 unique volumes unlocks the full tier of Friend of the Library artifacts while filling the capital archives with centuries of lost field research.",
+        leads = "Deliver recovered Library Books to Garion Wendell in Stormwind City (49.0, 86.3) for Alliance, or Owen Thadd in Undercity (74.0, 32.5) for Horde. Open the Library Ledger (/cw ledger) to track all missing volumes.",
+        related = { "npc:Garion Wendell", "npc:Owen Thadd", "npc:Keeper Bel'dugur", "npc:Librarian Mae Paledust", "item:211779", "relic:FriendOfTheLibrary10", "relic:FriendOfTheLibrary20", "relic:FriendOfTheLibrary25", "zone:Stormwind City", "zone:Undercity", "zone:City of Dalaran", "zone:Ironforge" },
+    },
+
+    -- =====================================================================
+    -- 20. THE EMERALD DREAM, YSERA'S BROOD & THE CREEPING NIGHTMARE
+    -- =====================================================================
+    {
+        key = "dossier:EmeraldNightmare",
+        category = "Dossier",
+        caseId = "ARCH-20",
+        classification = "Emerald Dream Corruption",
+        archivist = "Cenarion Circle Dreamwatchers",
+        title = "The Creeping Bough: Ysera's Brood & The Emerald Nightmare",
+        era = "Kalimdor & Swamp of Sorrows",
+        faction = "Contested",
+        icon = "Interface\\Icons\\Spell_Nature_Sleep",
+        zones = { "The Barrens", "Wailing Caverns", "Swamp of Sorrows", "Temple of Atal'Hakkar", "Moonglade", "Feralas", "Ashenvale", "Mount Hyjal", "Desolace", "Maraudon" },
+        keywords = { "Emerald Dream", "Emerald Nightmare", "Nightmare", "Ysera", "Naralex", "Eranikus", "Cobrahn", "Mutanus", "Moonglade" },
+        summary = "Tracing the darkening rift spreading through Ysera's Emerald Dream from Naralex's slumber in Wailing Caverns to Eranikus's madness in Atal'Hakkar.",
+        story = "Formed by the Titans as Azeroth's untouched verdant blueprint, the Emerald Dream has for ten millennia been tended by the Aspect Ysera and the dreaming Archdruids of Moonglade. While Malfurion Stormrage walked those timeless green paths after the Third War, mortal practitioners beneath the world began hearing another voice echoing up through ancient Great Trees and steam fissures.\n\nBeneath the arid Barrens, the night elf druid Naralex reached into the Dream to restore life to a parched savanna--only to sink into horrific visions while Mutanus the Devourer and Lord Cobrahn's Druids of the Fang twisted the Wailing Caverns into a serpent shrine. Half a world away, Ysera's own noble consort Eranikus succumbed to dark dream-corruption while standing guard over the Atal'ai inside the sunken Temple of Atal'Hakkar.",
+        synthesis = "Observations compiled across Moonglade, Nordrassil, and Maraudon prove these seemingly unrelated tragedies share a single planar root. Just as the Emerald Nightmare hijacked Naralex's mind in the Wailing Caverns and entangled Zaetar's mourning spirit inside Maraudon, the dark mist inside the Dream uses grief, hubris, and blood magic as footholds to bleed into waking Azeroth--forcing Cenarion Circle dreamwatchers and Warden Anarys Moonbough to watch every Great Tree portal.",
+        leads = "Wake Naralex in Wailing Caverns (Levels 17-24), defeat the Shade of Eranikus in the Temple of Atal'Hakkar (Levels 50-60), and consult Cenarion elders across Moonglade and Mount Hyjal.",
+        related = { "zone:Wailing Caverns", "zone:Temple of Atal'Hakkar", "zone:Moonglade", "zone:Mount Hyjal", "zone:Feralas", "npc:Naralex", "npc:Lord Cobrahn", "npc:Mutanus the Devourer", "npc:Shade of Eranikus", "npc:Malfurion Stormrage", "npc:Zaetar", "npc:Warden Anarys Moonbough" },
+    },
+
+    -- =====================================================================
+    -- 21. THE FORGING OF ASHBRINGER, THE SILVER HAND & NAXXRAMAS
+    -- =====================================================================
+    {
+        key = "dossier:AshbringerOrder",
+        category = "Dossier",
+        caseId = "ARCH-21",
+        classification = "Paladin Order & Runeblade Lineage",
+        archivist = "Argent Dawn & Ironforge Royal Foundry",
+        title = "The Forging of Ashbringer, The Silver Hand & The Dread Citadel",
+        era = "Lordaeron & Naxxramas",
+        faction = "Contested",
+        icon = "Interface\\Icons\\INV_Sword_48",
+        zones = { "Eastern Plaguelands", "Western Plaguelands", "Tirisfal Glades", "Scarlet Monastery", "Stratholme", "Naxxramas", "Ironforge", "Hillsbrad Foothills" },
+        keywords = { "Ashbringer", "Mograine", "Alexandros", "Renault", "Fairbanks", "Silver Hand", "Tirion Fordring", "Taelan", "Naxxramas", "Sapphiron" },
+        summary = "Chronicle of the radiant runeblade forged by King Magni Bronzebeard, its betrayal inside Stratholme, and Highlord Mograine's imprisonment in Naxxramas.",
+        story = "During the Siege of Blackrock Spire in the Second War, Paladin Alexandros Mograine seized a pulsing obsidian orb from an orc necromancer--an artifact that burned his hand with living shadow until he and his fellow knights channeled the Holy Light into it for days, birthing a crystal of pure blinding luminescence. Carrying that radiant gem into the heart of Ironforge's Great Forge, grieving King Magni Bronzebeard hammered every ounce of fury and devotion into crafting the legendary runeblade Ashbringer.\n\nNo undead abomination survived a single swing of Mograine's blade--until Grand Crusader Saidan Dathrohan (secretly possessed by the dreadlord Balnazzar) poisoned the jealousy of Alexandros's eldest son, Renault. Luring his father into an overwhelming Scourge ambush at Stratholme, Renault picked up the fallen Ashbringer and drove it through Alexandros's back, shattering the Light within the steel.",
+        synthesis = "Corrupted by parricide and claimed by Kel'Thuzad as leader of Naxxramas's Four Horsemen, Alexandros Mograine now stalks the Military Quarter wielding the whispering Corrupted Ashbringer. Only by carrying that cursed sword directly back into the Cathedral of the Scarlet Monastery can a fearless champion break the veil of lies surrounding Renault Mograine and free High Inquisitor Fairbanks's buried testimony--while exiled heroes like Tirion Fordring and Eitrigg prepare to reforge the Silver Hand itself.",
+        leads = "Uncover Fairbanks's hidden tomb in Scarlet Monastery (Levels 32-45), consult Tirion Fordring and Leonid Barthalomew in Eastern Plaguelands, and storm Naxxramas (Level 60 Raid).",
+        related = { "zone:Naxxramas", "zone:Scarlet Monastery", "zone:Stratholme", "zone:Eastern Plaguelands", "zone:Western Plaguelands", "zone:Ironforge", "npc:Highlord Mograine", "npc:Scarlet Commander Mograine", "npc:High Inquisitor Fairbanks", "npc:Grand Crusader Dathrohan", "npc:Tirion Fordring", "npc:Taelan Fordring", "npc:King Magni Bronzebeard", "npc:Kel'Thuzad", "npc:Sapphiron", "npc:Leonid Barthalomew the Revered", "npc:Eitrigg", "item:22691" },
+    },
+
+    -- =====================================================================
+    -- 22. THE FIVE DRAGONFLIGHTS: ASPECTS, BROODS & MORTAL PAWNS
+    -- =====================================================================
+    {
+        key = "dossier:DragonflightsPact",
+        category = "Dossier",
+        caseId = "ARCH-22",
+        classification = "Draconic Concordat & Chromatic Heresy",
+        archivist = "Wyrmrest Chroniclers & Bronze Watch",
+        title = "The Five Dragonflights: Broods, Aspects & Mortal Manipulation",
+        era = "Azerothian Skies",
+        faction = "Contested",
+        icon = "Interface\\Icons\\INV_Jewelry_Talisman_11",
+        zones = { "Burning Steppes", "Blackwing Lair", "Upper Blackrock Spire", "Dustwallow Marsh", "Onyxia's Lair", "Azshara", "Swamp of Sorrows", "Temple of Atal'Hakkar", "Western Plaguelands", "Tanaris", "Wetlands", "Mount Hyjal" },
+        keywords = { "Dragonflight", "Chromatic", "Nefarian", "Onyxia", "Vaelastrasz", "Lashlayer", "Azuregos", "Chromie", "Deathwing", "Drakefire" },
+        summary = "How Neltharion's fractured children infiltrate mortal capitals and splice dragon bloodlines while four strained Flights defend Azeroth's balance.",
+        story = "Blessed by the Titans to preserve Azeroth across five domains--Red of Life, Blue of Magic, Green of the Dream, Bronze of Time, and Black of Earth--the five great dragonflights have never recovered from the treachery of Deathwing during the War of the Ancients and the Second War. While Alexstrasza's noble Red brood still mourns its captivity at Grim Batol, Deathwing's eldest offspring quietly carved empires inside human and orcish realms alike.\n\nDisguised as Lord Victor Nefarius atop Blackrock Spire, Nefarian ruthlessly splices captive wyrms into abominable Chromatic horrors alongside Broodlord Lashlayer and General Drakkisath, even corrupting Vaelastrasz the Red. Meanwhile, his sister Onyxia disguises herself as Lady Katrana Prestor inside Stormwind Keep, paralyzing Alliance politics while abducting King Varian Wrynn.",
+        synthesis = "Cross-continental chronologies compiled alongside the Bronze dragon Chromie in Western Plaguelands confirm the other four flights are stretched thin countering the Black brood's schemes. With Azuregos dodging greedy spellcasters in Azshara, Sapphiron enslaved into undead frost wyrmhood in Naxxramas, and Eranikus trapped in the Sunken Temple, mortal champions armed with the Seal of Ascension and Drakefire Amulet have become the decisive balance between draconic order and chromatic ruin.",
+        leads = "Earn the Seal of Ascension for Upper Blackrock Spire (Levels 58-60), expose Onyxia via the Drakefire Amulet chain into Onyxia's Lair (Raid), and ascend into Blackwing Lair (Raid).",
+        related = { "zone:Blackwing Lair", "zone:Onyxia's Lair", "zone:Upper Blackrock Spire", "zone:Dustwallow Marsh", "zone:Burning Steppes", "zone:Azshara", "npc:Nefarian", "npc:Onyxia", "npc:Lady Katrana Prestor", "npc:Vaelastrasz the Corrupt", "npc:Broodlord Lashlayer", "npc:General Drakkisath", "npc:Azuregos", "npc:Shade of Eranikus", "npc:Chromie", "npc:Sapphiron", "item:16309", "item:12344" },
+    },
+
+    -- =====================================================================
+    -- 23. GNOMEREGAN'S FALL & THE STEAMWHEEDLE TRADE EMPIRE
+    -- =====================================================================
+    {
+        key = "dossier:GoblinCartels",
+        category = "Dossier",
+        caseId = "ARCH-23",
+        classification = "Industrial Espionage & Cartel Trade",
+        archivist = "Tinkers' Union & Steamwheedle Auditors",
+        title = "Gears, Radiation & Gold: Gnomeregan's Fall & The Steamwheedle Cartel",
+        era = "Dun Morogh & The Trade Ports",
+        faction = "Contested",
+        icon = "Interface\\Icons\\INV_Gizmo_02",
+        zones = { "Gnomeregan", "Dun Morogh", "Ironforge", "The Barrens", "Stranglethorn Vale", "Tanaris", "Winterspring", "Stonetalon Mountains", "Thousand Needles" },
+        keywords = { "Gnomeregan", "Thermaplugg", "Mekkatorque", "Steamwheedle", "Venture Co", "Venture Company", "Gazlowe", "Revilgaz", "Ratchet", "Booty Bay", "Gadgetzan" },
+        summary = "Contrasting Gnomeregan's tragic industrial betrayal under Mekgineer Thermaplugg with the ruthless neutrality of Steamwheedle's goblin freeports.",
+        story = "Before the Third War, the subterranean technopolis of Gnomeregan stood as an unrivaled marvel of clockwork engineering and Alliance innovation. When primitive troggs burrowed upward into the lower workshops while Stormwind and Lordaeron burned, Chief Advisor Sicco Thermaplugg persuaded High Tinker Gelbin Mekkatorque to flood the residential levels with emergency radiation vents--secretly falsifying containment figures until four in five gnomes perished and the survivors became Irradiated Leper Gnomes.\n\nWhile displaced gnomes found cramped shelter in Ironforge's Tinker Town, goblin trade lords of the Steamwheedle Cartel capitalized on postwar scarcity. Under Chief Engineer Gazlowe in Ratchet, Baron Revilgaz in Booty Bay, and cartel bosses in Gadgetzan and Everlook, neutral goblin syndicates became Azeroth's indispensable shippers, mercenaries, and oilmen.",
+        synthesis = "Engineering audits from Dun Morogh, the Barrens, and Stranglethorn reveal constant friction between Steamwheedle port authorities and the reckless Venture Company deforestation crews tearing through Stonetalon Mountains and Stranglethorn jungles. Yet whether repairing Orgrimmar's aqueducts, sponsoring rocket tests on the Shimmering Flats, or buying salvages off The Drowned City, goblin gold flows smoothly wherever Alliance and Horde dare not send their own fleets.",
+        leads = "Storm irradiated Gnomeregan (Levels 29-38) to confront Mekgineer Thermaplugg, and inspect Steamwheedle trade hubs in Ratchet (The Barrens) and Booty Bay (Stranglethorn Vale).",
+        related = { "zone:Gnomeregan", "zone:Dun Morogh", "zone:Ironforge", "zone:The Barrens", "zone:Stranglethorn Vale", "zone:Tanaris", "zone:Stonetalon Mountains", "npc:High Tinker Mekkatorque", "npc:Mekgineer Thermaplugg", "npc:Gazlowe", "npc:Baron Revilgaz" },
+    },
+
+    -- =====================================================================
+    -- 24. THE FOUR ELEMENTAL PLANES & PRIMORDIAL LIEUTENANTS
+    -- =====================================================================
+    {
+        key = "dossier:ElementalLords",
+        category = "Dossier",
+        caseId = "ARCH-24",
+        classification = "Elemental Banishment & Planar Rifts",
+        archivist = "Hydraxian Emissaries & Earthen Ring",
+        title = "The Four Elemental Planes: Primordial Lords & Bound Lieutenants",
+        era = "Primordial Azeroth & Blackrock",
+        faction = "Contested",
+        icon = "Interface\\Icons\\INV_Hammer_Unique_Sulfuras",
+        zones = { "Molten Core", "Burning Steppes", "Searing Gorge", "Blackrock Depths", "Azshara", "Desolace", "Maraudon", "Silithus", "Un'Goro Crater", "Zephras Isle", "Arathi Highlands" },
+        keywords = { "Elemental Plane", "Firelord", "Ragnaros", "Executus", "Hydraxis", "Neptulon", "Theradras", "Therazane", "Al'Akir", "Thunderaan", "Thunderfury", "Sulfuras", "Skywall" },
+        summary = "Banished beneath the Elemental Planes by the Titans long ago, servants of Fire, Water, Earth, and Air still bleed through rifts from Molten Core to Zephras Isle.",
+        story = "Before mortal kingdoms ever rose, the four Elemental Lords--Ragnaros the Firelord, Neptulon the Tidehunter, Therazane the Stonemother, and Al'Akir the Windlord--waged endless cataclysmic war as servants of the Old Gods. After the Titanic Keepers imprisoned all four in the Firelands, Abyssal Maw, Deepholm, and Skywall, Azeroth knew peace only so long as those planar seals remained unbroken.\n\nMortal folly cracked every one of those barriers. Three centuries ago, Sorcerer-Thane Thaurissan dragged Ragnaros into the Molten Core, where Ambassador Flamelash and Majordomo Executus enforce fiery tyranny. In Desolace, Therazane's elemental daughter Princess Theradras drained a verdant realm into dust; in Silithus, Twilight cultists summon Abyssal Dukes; and out in the Great Sea, Zephras Isle straddles a splintered threshold into Skywall itself.",
+        synthesis = "No elemental war remains confined to a single zone. Because Ragnaros once betrayed and shattered Prince Thunderaan of Skywall, sealing the Windseeker's essence inside Garr and Baron Geddon within the Molten Core, defeating Firelands tyranny requires tempering Aqual Quintessence for Duke Hydraxis of Neptulon's Tide while guarding Zephras Isle's storm shrines against Al'Akir's tempests.",
+        leads = "Serve Duke Hydraxis off southeastern Azshara to craft Aqual Quintessence, breach Molten Core (Level 60 Raid), purge Maraudon (Levels 46-55), and study Zephras Isle (Levels 1-12).",
+        related = { "zone:Molten Core", "zone:Blackrock Depths", "zone:Burning Steppes", "zone:Azshara", "zone:Maraudon", "zone:Silithus", "zone:Zephras Isle", "npc:Ragnaros", "npc:Majordomo Executus", "npc:Ambassador Flamelash", "npc:Duke Hydraxis", "npc:Princess Theradras", "npc:Vaelis Windstrider", "npc:Stormcaller Kaelen", "npc:Archivist Taelis Windwatcher", "item:19019", "item:17182", "item:17333" },
+    },
+
+    -- =====================================================================
+    -- 25. THE SCEPTER OF THE SHIFTING SANDS & THE SCARAB WALL
+    -- =====================================================================
+    {
+        key = "dossier:AhnQirajWarEffort",
+        category = "Dossier",
+        caseId = "ARCH-25",
+        classification = "Cross-Faction War Effort & Scepter Shards",
+        archivist = "Might of Kalimdor & Brood of Nozdormu",
+        title = "The Scarab Gong: The Scepter of the Shifting Sands & The Qiraji War",
+        era = "Silithus & The Three Flights",
+        faction = "Contested",
+        icon = "Interface\\Icons\\INV_Misc_AhnQirajTrinket_01",
+        zones = { "Silithus", "Ruins of Ahn'Qiraj", "Temple of Ahn'Qiraj", "Tanaris", "Azshara", "Blackwing Lair", "Temple of Atal'Hakkar", "Feralas", "Moonglade" },
+        keywords = { "Shifting Sands", "Scepter", "Scarab Wall", "Anachronos", "Fandral", "Ossirian", "Vek'lor", "Vek'nilash", "Twin Emperors", "Saurfang", "Brood of Nozdormu" },
+        summary = "Forging a fractured Bronze key across Blackwing Lair, Azshara, and Moonglade while Alliance and Horde unite under Varok Saurfang before the Scarab Wall.",
+        story = "For nearly a millennium after Archdruid Fandral Staghelm watched Qiraji legions tear his son Valstann apart, the Scarab Wall stood sealed across southern Silithus--its Scepter shattered into three hidden shards guarded by the Bronze dragon Anachronos, Vaelastrasz of the Red Flight, Eranikus of the Green, and Azuregos of the Blue. Yet behind the obsidian ramparts, the Twin Emperors Vek'lor and Vek'nilash bred colossal war-swarms while Ossirian the Unscarred drilled Anubisath legions.\n\nAs silithid hives erupted from Tanaris to Feralas, mortal nations realized containment had failed. Under the uneasy joint command of the Might of Kalimdor led by High Overlord Varok Saurfang, Alliance and Horde logistics trains poured copper, linen, bandages, and ore toward Cenarion Hold while a few heroes raced to reassemble The Scepter of the Shifting Sands.",
+        synthesis = "Forging the Scepter demands more than martial strength: a champion must survive Nefarian's five-hour draconic gauntlet in Blackwing Lair for the Red Shard, outwit Azuregos's arcane minnow riddles off Azshara's reefs for the Blue Shard, and redeem the maddened Shade of Eranikus beneath Moonglade for the Green Shard. Only when the Scarab Gong strikes beneath unified banners can mortals breach both the Ruins and Temple of Ahn'Qiraj to face C'Thun.",
+        leads = "Rally at Cenarion Hold in Silithus (Levels 55-60), trace the Scepter Shards across Blackwing Lair, Azshara, and Moonglade, and conquer the Ruins and Temple of Ahn'Qiraj (Raids).",
+        related = { "zone:Silithus", "zone:Ruins of Ahn'Qiraj", "zone:Temple of Ahn'Qiraj", "zone:Blackwing Lair", "zone:Temple of Atal'Hakkar", "npc:C'Thun", "npc:Ossirian the Unscarred", "npc:Emperor Vek'lor", "npc:Archdruid Fandral Staghelm", "npc:Varok Saurfang", "npc:Azuregos", "npc:Shade of Eranikus", "npc:Nefarian", "npc:Vaelastrasz the Corrupt", "item:21175" },
+    },
 }

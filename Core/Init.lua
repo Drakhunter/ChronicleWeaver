@@ -72,6 +72,22 @@ local defaults = {
     groupByZone = false,       -- Group sidebar entries by Zone folders
     spoilerFree = true,        -- Hide full lore text until discovered in-game
     autoToast = true,          -- Show toast banner on new discovery
+    toastSound = true,         -- Play sound effect on discovery toast banner
+    chatAlerts = true,         -- Print automatic harvest messages in chat
+    trackQuests = true,        -- Automatically harvest quest narratives & resolutions
+    trackBooks = true,         -- Automatically harvest in-game books & plaques
+    trackRelics = true,        -- Automatically harvest bag/tooltip relics & library books
+    trackWorld = true,         -- Automatically unlock zones, subzones & target NPCs
+    showTooltips = true,       -- Show lore lines on NPC and item tooltips
+    showDeliveryHints = true,  -- Show librarian turn-in hints on deliverable books
+    showGossipButton = true,   -- Show [+] Archive Lore button on GossipFrame
+    proximityRadar = true,     -- Alert when approaching unrecorded books or chronicles
+    showMapOverlay = true,     -- Show ChronicleWeaver zone progress bar on WorldMapFrame
+    addonSync = true,          -- Allow party/guild lore link sharing over CW_LORE
+    soundStyle = "CHIME",      -- "CHIME", "PAGETURN", "FANFARE", or "MUTE"
+    toastLocked = false,       -- Lock Discovery Toast position
+    toastPos = { point = "TOP", relPoint = "TOP", x = 0, y = -120 },
+    storytellerMode = false,   -- Collapse sidebar for wide-page reading
     windowPos = { point = "CENTER", relPoint = "CENTER", x = 0, y = 0 },
     discovered = {},           -- [entryKey] = timestamp
     discoveredMeta = {},       -- [entryKey] = { char = "Name-Realm", faction = "Alliance"|"Horde", time = timestamp }
@@ -81,9 +97,12 @@ local defaults = {
     quests = {},               -- [questKey] = { title, description, resolution, ... }
     items = {},                -- [itemKey] = { title, flavorText, icon, ... }
     gossip = {},               -- [gossipKey] = { title, text, npc, ... }
+    completedLibraryBooks = {},-- [itemID] = true (turned in)
+    scrollPositions = {},      -- [entryKey] = scrollOffset
     charFilter = "ALL",        -- "ALL" or "CURRENT"
     factionFilter = "ALL",     -- "ALL", "Alliance", "Horde", "Neutral"
-    groupMode = "ZONE",        -- "ZONE" or "NONE"
+    eraFilter = "ALL",         -- "ALL", "FOREVER", "CLASSIC", "HARVEST"
+    groupMode = "ZONE",        -- "ZONE", "ERA", or "NONE"
     collapsedGroups = {},      -- [groupKey] = true
 }
 
@@ -122,9 +141,14 @@ local function OnAddonLoaded(event, loadedAddon)
     ns.db.quests = ns.db.quests or {}
     ns.db.items = ns.db.items or {}
     ns.db.gossip = ns.db.gossip or {}
+    ns.db.completedLibraryBooks = ns.db.completedLibraryBooks or {}
+    ns.db.scrollPositions = ns.db.scrollPositions or {}
     ns.db.collapsedGroups = ns.db.collapsedGroups or {}
-    if ns.db.groupMode ~= "ZONE" and ns.db.groupMode ~= "NONE" then
+    if ns.db.groupMode ~= "ZONE" and ns.db.groupMode ~= "ERA" and ns.db.groupMode ~= "NONE" then
         ns.db.groupMode = "ZONE"
+    end
+    if ns.db.eraFilter ~= "ALL" and ns.db.eraFilter ~= "FOREVER" and ns.db.eraFilter ~= "CLASSIC" and ns.db.eraFilter ~= "HARVEST" then
+        ns.db.eraFilter = "ALL"
     end
     if ns.db.charFilter ~= "ALL" and ns.db.charFilter ~= "CURRENT" then
         ns.db.charFilter = "ALL"
@@ -202,13 +226,49 @@ SlashCmdList["CHRONICLEWEAVER"] = function(msg)
     elseif cmd == "toast" then
         ns.db.autoToast = not ns.db.autoToast
         ns.Print("Discovery Toasts: " .. (ns.db.autoToast and "|cff4cd964Enabled|r" or "|cffff3b30Disabled|r"))
-    elseif cmd == "scan" or cmd == "quests" then
+        if ns.RefreshOptionsPanel then ns.RefreshOptionsPanel() end
+    elseif cmd == "quests" or cmd == "trackquests" then
+        ns.db.trackQuests = (ns.db.trackQuests == false)
+        ns.Print("Automatic Quest Tracking: " .. (ns.db.trackQuests and "|cff4cd964Enabled|r" or "|cffff3b30Disabled|r"))
+        if ns.RefreshOptionsPanel then ns.RefreshOptionsPanel() end
+    elseif cmd == "options" or cmd == "config" or cmd == "settings" then
+        if ns.ShowMainFrame then
+            ns.ShowMainFrame()
+        elseif ns.ToggleMainFrame and ChronicleWeaverMainFrame and not ChronicleWeaverMainFrame:IsShown() then
+            ns.ToggleMainFrame()
+        end
+        if ns.ToggleOptionsPanel then
+            ns.ToggleOptionsPanel(true)
+        end
+    elseif cmd == "ledger" or cmd == "books" then
+        if ns.ShowMainFrame then
+            ns.ShowMainFrame()
+        elseif ns.ToggleMainFrame and ChronicleWeaverMainFrame and not ChronicleWeaverMainFrame:IsShown() then
+            ns.ToggleMainFrame()
+        end
+        if ns.ToggleLedgerPanel then
+            ns.ToggleLedgerPanel("LEDGER")
+        end
+    elseif cmd == "export" then
+        if ns.ShowMainFrame then
+            ns.ShowMainFrame()
+        elseif ns.ToggleMainFrame and ChronicleWeaverMainFrame and not ChronicleWeaverMainFrame:IsShown() then
+            ns.ToggleMainFrame()
+        end
+        if ns.ToggleLedgerPanel then
+            ns.ToggleLedgerPanel("EXPORT")
+        end
+    elseif cmd == "nearest" or cmd == "radar" then
+        if ns.PinNearestMissingBook then
+            ns.PinNearestMissingBook()
+        end
+    elseif cmd == "scan" then
         if ns.ScanActiveQuestLog then
-            ns.ScanActiveQuestLog()
+            ns.ScanActiveQuestLog(true)
             ns.Print("Scanned your active Quest Log for chronicles.")
             if ns.RefreshUI then ns.RefreshUI() end
         elseif ns.ScanQuestLog then
-            ns.ScanQuestLog()
+            ns.ScanQuestLog(true)
             ns.Print("Scanned your active Quest Log for chronicles.")
             if ns.RefreshUI then ns.RefreshUI() end
         else
@@ -217,11 +277,16 @@ SlashCmdList["CHRONICLEWEAVER"] = function(msg)
     elseif cmd == "help" then
         ns.Print("Available Commands:")
         print("  |cffffd100/cw|r - Open/Close the Tome")
+        print("  |cffffd100/cw options|r - Open General Options panel")
+        print("  |cffffd100/cw ledger|r - Open Library Books Ledger & Checklist")
+        print("  |cffffd100/cw export|r - Open Markdown & Lua Export tool")
+        print("  |cffffd100/cw nearest|r - Pin the nearest uncollected Library Book")
+        print("  |cffffd100/cw quests|r - Toggle automatic Quest Tracking")
+        print("  |cffffd100/cw scan|r - Manually harvest lore from active Quest Log")
         print("  |cffffd100/cw theme|r - Toggle between Parchment & Dark modes")
         print("  |cffffd100/cw spoilers|r - Toggle Spoiler-Safe mode")
         print("  |cffffd100/cw scope|r - Toggle Account-Wide vs. Current Character entries")
         print("  |cffffd100/cw toast|r - Toggle Discovery Toast banners")
-        print("  |cffffd100/cw scan|r - Harvest lore from active Quest Log")
     else
         if ns.ToggleMainFrame then
             ns.ToggleMainFrame()

@@ -51,17 +51,18 @@ read_globals = {
     -- Frames & UI
     "CreateFrame", "UIParent", "GameTooltip", "GameTooltipTextLeft1",
     "ItemTextFrame", "ItemTextFrameTitleText", "ItemTextPageText",
-    "GossipFrame", "GossipFrameTitleText",
+    "GossipFrame", "GossipFrameTitleText", "WorldMapFrame",
     "StaticPopup_Show", "InCombatLockdown",
     "PlaySound", "SOUNDKIT",
     "TooltipDataProcessor", "UiMapPoint",
 
     -- Namespaced APIs
-    "C_AddOns", "C_Container", "C_GossipInfo", "C_Item", "C_Map",
+    "C_AddOns", "C_ChatInfo", "C_Container", "C_GossipInfo", "C_Item", "C_Map",
     "C_QuestLog", "C_SuperTrack", "C_Timer", "Enum",
 
     -- Unit / zone / item / quest / book text
     "UnitExists", "UnitName", "UnitFactionGroup", "GetRealmName",
+    "IsInGroup", "IsInRaid", "IsInGuild",
     "GetRealZoneText", "GetZoneText", "GetSubZoneText",
     "ItemTextGetItem", "ItemTextGetText", "ItemTextGetPage",
     "GetTitleText", "GetQuestText", "GetRewardText", "GetGossipText",

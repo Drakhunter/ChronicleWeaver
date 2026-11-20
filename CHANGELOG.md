@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.3.0] - 2026-11-20
+
+### Added
+- ***WoW: Forever* Library Book Delivery Hints & Interactive 35-Book Ledger**: Automatic faction librarian turn-in guidance (**Garion Wendell** in Stormwind City `49.0, 86.3` for Alliance; **Owen Thadd** in Undercity `74.0, 32.5` for Horde) across item tooltips, chat harvest alerts, and the Codex Reader (`Pin Turn-In` button), plus a dedicated Library Ledger panel (`/cw ledger`, `/cw nearest`) with live progress tracking and `Pin Nearest Missing`.
+- **General Options Drawer (`/cw options`, `/cw quests`)**: Dedicated settings view for toggling automatic Quest, Book, Relic, and World scanning, Gossip capture button visibility, Spoiler-Safe mode, Delivery Hints, Item Tooltips, Auto-Toasts, Soundscapes (`Chime / Page Turn / Fanfare / Muted`), and Toast Position locking.
+- **Rich Codex UX & Navigation**: Clickable inline hyperlinked terms (`|Hcw:<key>|h`) inside chronicle prose and Dossier syntheses, Storyteller Wide Mode (`Wide`/`Split`), `<- Back` navigation history, per-entry scroll position memory, Chronological `Group: Zone / Era / Flat` sidebar organization, `Era:` filter (`All / Forever+ / Classic / Harvested`), and right-click Zone folder pinning.
+- **World Map Cartography Bar, Proximity Radar, Peer Sync & Export**: Added an interactive `Pin Missing` bar on `WorldMapFrame`, proximity "Archivist's Whisper" radar toasts, `CW_LORE` party/raid/guild peer sharing (`Share`), and Markdown/Lua community export (`/cw export`).
+- **Expanded Static Lore Database (280 Unique Keys) & Grand Archivist Dossiers (`ARCH-19` - `ARCH-25`)**: Added 7 Classic Raid dungeons (*Molten Core*, *Onyxia's Lair*, *Blackwing Lair*, *Zul'Gurub*, *Ruins of Ahn'Qiraj*, *Temple of Ahn'Qiraj*, *Naxxramas*), 27 Classic & *WoW: Forever* NPCs/Scholars/Archivists, 28 Curated Relics/Keys/Librams & *Friend of the Library* milestone collections, and 7 new Grand Archivist Dossiers (`ARCH-19` through `ARCH-25`).
+
 ## [1.2.6] - 2026-11-18
 
 ### Added

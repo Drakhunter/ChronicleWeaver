@@ -102,9 +102,6 @@ pinBtn:SetScript("OnClick", function()
     local entry = ns.selectedKey and ns.LoreByKey and ns.LoreByKey[ns.selectedKey]
     if entry and entry.mapID and entry.x and entry.y and ns.SetMapPin then
         ns.SetMapPin(entry.mapID, entry.x, entry.y, entry.title or "Lore Location")
-        if ns.Print then
-            ns.Print("Pinned location for: |cffffd100" .. (entry.title or entry.key) .. "|r")
-        end
     end
 end)
 pinBtn:SetScript("OnEnter", function(self)
@@ -115,6 +112,34 @@ pinBtn:SetScript("OnEnter", function(self)
 end)
 pinBtn:SetScript("OnLeave", function() GameTooltip:Hide() end)
 readerPanel.pinBtn = pinBtn
+
+-- Turn-In Delivery Map Pin Action Button
+local deliverPinBtn = CreateJournalActionButton(readerPanel, 94, 22, "Pin Turn-In")
+deliverPinBtn:SetPoint("TOPRIGHT", -14, -14)
+deliverPinBtn:Hide()
+deliverPinBtn:SetScript("OnClick", function()
+    local entry = ns.selectedKey and ns.LoreByKey and ns.LoreByKey[ns.selectedKey]
+    local target = entry and entry.deliveryInfo and entry.deliveryInfo.primary
+    if target and target.mapID and target.x and target.y and ns.SetMapPin then
+        local label = (target.npc or "Turn-In") .. (target.location and (" - " .. target.location) or "")
+        ns.SetMapPin(target.mapID, target.x, target.y, label)
+    end
+end)
+deliverPinBtn:HookScript("OnEnter", function(self)
+    GameTooltip:SetOwner(self, "ANCHOR_TOP")
+    GameTooltip:SetText("Pin Delivery Location", 1, 0.82, 0.45)
+    local entry = ns.selectedKey and ns.LoreByKey and ns.LoreByKey[ns.selectedKey]
+    local target = entry and entry.deliveryInfo and entry.deliveryInfo.primary
+    if target then
+        local coordStr = target.coords and (" (" .. target.coords .. ")") or ""
+        GameTooltip:AddLine(string.format("%s - %s%s", target.npc or "NPC", target.location or "", coordStr), 0.9, 0.9, 0.9, true)
+    else
+        GameTooltip:AddLine("Set a navigational waypoint to the turn-in NPC.", 0.9, 0.9, 0.9, true)
+    end
+    GameTooltip:Show()
+end)
+deliverPinBtn:HookScript("OnLeave", function() GameTooltip:Hide() end)
+readerPanel.deliverPinBtn = deliverPinBtn
 
 -- Delete Harvested Entry Action Button
 local deleteBtn = CreateJournalActionButton(readerPanel, 70, 22, "Delete")
@@ -142,6 +167,59 @@ deleteBtn:SetScript("OnClick", function()
 end)
 readerPanel.deleteBtn = deleteBtn
 
+-- Navigation Back, Storyteller Wide Mode & Peer Share Action Buttons (Row 2)
+local wideBtn = CreateJournalActionButton(readerPanel, 52, 20, "Wide")
+wideBtn:SetPoint("TOPRIGHT", -14, -40)
+wideBtn:Hide()
+wideBtn:SetScript("OnClick", function()
+    if not ns.db then return end
+    ns.db.storytellerMode = not ns.db.storytellerMode
+    if ns.ApplyStorytellerMode then ns.ApplyStorytellerMode() end
+    if ns.RefreshUI then ns.RefreshUI() end
+end)
+wideBtn:HookScript("OnEnter", function(self)
+    GameTooltip:SetOwner(self, "ANCHOR_TOP")
+    GameTooltip:SetText("Storyteller Mode", 1, 0.82, 0.45)
+    GameTooltip:AddLine("Toggle full-width parchment reading view by collapsing the left index.", 0.9, 0.9, 0.9, true)
+    GameTooltip:Show()
+end)
+wideBtn:HookScript("OnLeave", function() GameTooltip:Hide() end)
+readerPanel.wideBtn = wideBtn
+
+local shareBtn = CreateJournalActionButton(readerPanel, 52, 20, "Share")
+shareBtn:SetPoint("RIGHT", wideBtn, "LEFT", -6, 0)
+shareBtn:Hide()
+shareBtn:SetScript("OnClick", function()
+    if ns.selectedKey and ns.BroadcastEntryToPeers then
+        ns.BroadcastEntryToPeers(ns.selectedKey)
+    end
+end)
+shareBtn:HookScript("OnEnter", function(self)
+    GameTooltip:SetOwner(self, "ANCHOR_TOP")
+    GameTooltip:SetText("Share Chronicle", 1, 0.82, 0.45)
+    GameTooltip:AddLine("Broadcast this entry to Party, Raid, or Guild peers via CW_LORE sync.", 0.9, 0.9, 0.9, true)
+    GameTooltip:Show()
+end)
+shareBtn:HookScript("OnLeave", function() GameTooltip:Hide() end)
+readerPanel.shareBtn = shareBtn
+
+local backBtn = CreateJournalActionButton(readerPanel, 58, 20, "<- Back")
+backBtn:SetPoint("RIGHT", shareBtn, "LEFT", -6, 0)
+backBtn:Hide()
+backBtn:SetScript("OnClick", function()
+    if ns.NavigateBack then
+        ns.NavigateBack()
+    end
+end)
+backBtn:HookScript("OnEnter", function(self)
+    GameTooltip:SetOwner(self, "ANCHOR_TOP")
+    GameTooltip:SetText("Previous Chronicle", 1, 0.82, 0.45)
+    GameTooltip:AddLine("Return to the previously viewed entry.", 0.9, 0.9, 0.9, true)
+    GameTooltip:Show()
+end)
+backBtn:HookScript("OnLeave", function() GameTooltip:Hide() end)
+readerPanel.backBtn = backBtn
+
 -- Heading FontString
 local entryHeading = readerPanel:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
 entryHeading:SetPoint("TOPLEFT", portraitFrame, "TOPRIGHT", 14, -2)
@@ -153,6 +231,8 @@ readerPanel.entryHeading = entryHeading
 -- Meta FontString (Category | Era/Zone | Discovery Status)
 local entryMeta = readerPanel:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
 entryMeta:SetPoint("TOPLEFT", entryHeading, "BOTTOMLEFT", 0, -3)
+entryMeta:SetJustifyH("LEFT")
+entryMeta:SetWordWrap(false)
 entryMeta:SetTextColor(0.65, 0.75, 0.85)
 readerPanel.entryMeta = entryMeta
 
@@ -265,6 +345,66 @@ storyScrollFrame:SetScript("OnSizeChanged", function(_, width)
     end
 end)
 
+local isRestoringScroll = false
+
+function ns.ApplyStorytellerMode()
+    local isWide = (ns.db and ns.db.storytellerMode == true)
+    if main.listPanel then
+        if isWide then
+            main.listPanel:Hide()
+            readerPanel:ClearAllPoints()
+            readerPanel:SetPoint("TOPLEFT", 16, -76)
+            readerPanel:SetPoint("BOTTOMRIGHT", -16, 16)
+        else
+            main.listPanel:Show()
+            readerPanel:ClearAllPoints()
+            readerPanel:SetPoint("TOPLEFT", main.listPanel, "TOPRIGHT", 10, 0)
+            readerPanel:SetPoint("BOTTOMRIGHT", -16, 16)
+        end
+    end
+    wideBtn:SetText(isWide and "Split" or "Wide")
+end
+
+function ns.AttachHyperlinkHandlers(frame)
+    if not frame or not frame.SetHyperlinksEnabled then return end
+    frame:SetHyperlinksEnabled(true)
+    frame:SetScript("OnHyperlinkClick", function(_, link)
+        local key = link and link:match("^cw:(.+)$")
+        if key and ns.LoreByKey and ns.LoreByKey[key] and ns.SelectEntry then
+            ns.SelectEntry(key)
+        end
+    end)
+    frame:SetScript("OnHyperlinkEnter", function(self, link)
+        local key = link and link:match("^cw:(.+)$")
+        local target = key and ns.LoreByKey and ns.LoreByKey[key]
+        if not target then return end
+        local isUnlocked = ns.IsEntryUnlocked and ns.IsEntryUnlocked(target)
+        local isSpoilerFree = (ns.db and ns.db.spoilerFree == true)
+        GameTooltip:SetOwner(self, "ANCHOR_CURSOR")
+        GameTooltip:SetText(target.title or key, 1, 0.82, 0.45)
+        if isUnlocked or not isSpoilerFree then
+            if target.summary and target.summary ~= "" then
+                GameTooltip:AddLine(target.summary, 0.9, 0.9, 0.9, true)
+            end
+        else
+            GameTooltip:AddLine("Undiscovered chronicle.", 0.65, 0.65, 0.65, true)
+        end
+        GameTooltip:AddLine("Click to open this chronicle.", 0.6, 0.8, 1.0)
+        GameTooltip:Show()
+    end)
+    frame:SetScript("OnHyperlinkLeave", function()
+        GameTooltip:Hide()
+    end)
+end
+
+ns.AttachHyperlinkHandlers(storyScrollChild)
+
+storyScrollFrame:HookScript("OnVerticalScroll", function(_, offset)
+    if not isRestoringScroll and ns.selectedKey and ns.db and ns.db.scrollPositions then
+        ns.db.scrollPositions[ns.selectedKey] = offset
+    end
+end)
+
 -- Forward Mouse-Wheel Scrolling
 function ns.ScrollStoryByDelta(delta)
     if not storyScrollFrame then return end
@@ -273,6 +413,9 @@ function ns.ScrollStoryByDelta(delta)
     local maxRange = storyScrollFrame:GetVerticalScrollRange() or 0
     local newScroll = math.max(0, math.min(maxRange, cur - (delta * step)))
     storyScrollFrame:SetVerticalScroll(newScroll)
+    if not isRestoringScroll and ns.selectedKey and ns.db and ns.db.scrollPositions then
+        ns.db.scrollPositions[ns.selectedKey] = newScroll
+    end
 end
 
 storyScrollFrame:EnableMouseWheel(true)
@@ -308,6 +451,9 @@ readerPanel.revealBtn = revealBtn
 -- 5. Refresh Reader View
 -- -------------------------------------------------------------------------
 function ns.RefreshReaderView()
+    if ns.ApplyStorytellerMode then
+        ns.ApplyStorytellerMode()
+    end
     local entry = ns.selectedKey and ns.LoreByKey and ns.LoreByKey[ns.selectedKey]
     local isDark = (ns.db and ns.db.theme == "DARK")
 
@@ -322,7 +468,15 @@ function ns.RefreshReaderView()
         end
         entryStory:SetText("")
         pinBtn:Hide()
+        deliverPinBtn:Hide()
         deleteBtn:Hide()
+        shareBtn:Hide()
+        backBtn:Hide()
+        if ns.db and ns.db.storytellerMode then
+            wideBtn:Show()
+        else
+            wideBtn:Hide()
+        end
         revealBtn:Hide()
         connLabel:Hide()
         for i = 1, 6 do connPills[i]:Hide() end
@@ -370,15 +524,12 @@ function ns.RefreshReaderView()
         entrySummary:SetText(entry.summary or "")
     end
 
-    -- Action Button: Pin to Map
+    -- Action Buttons: Pin to Map, Pin Turn-In, Delete (Right-to-Left Dynamic Anchoring)
     local hasCoords = (entry.mapID and entry.x and entry.x > 0)
-    if hasCoords then
-        pinBtn:Show()
-    else
-        pinBtn:Hide()
-    end
+    local deliveryTarget = entry.deliveryInfo and entry.deliveryInfo.primary
+    local hasDeliveryCoords = (deliveryTarget and deliveryTarget.mapID and deliveryTarget.x and deliveryTarget.x > 0)
+        and (isUnlocked or not isSpoilerFree)
 
-    -- Action Button: Delete
     local isHarvested = (entry.category == "Book")
         or (entry.category == "Quest")
         or (ns.db and ns.db.books and ns.db.books[entry.key])
@@ -386,22 +537,56 @@ function ns.RefreshReaderView()
         or (ns.db and ns.db.items and ns.db.items[entry.key])
         or (ns.db and ns.db.gossip and ns.db.gossip[entry.key])
 
-    if isHarvested then
-        deleteBtn:ClearAllPoints()
-        if hasCoords then
-            deleteBtn:SetPoint("RIGHT", pinBtn, "LEFT", -6, 0)
+    local lastRightBtn = nil
+    local function PlaceHeaderButton(btn, visible, yOff)
+        if visible then
+            btn:ClearAllPoints()
+            if lastRightBtn then
+                btn:SetPoint("RIGHT", lastRightBtn, "LEFT", -6, 0)
+            else
+                btn:SetPoint("TOPRIGHT", -14, yOff)
+            end
+            btn:Show()
+            lastRightBtn = btn
         else
-            deleteBtn:SetPoint("TOPRIGHT", -14, -14)
+            btn:Hide()
         end
-        deleteBtn:Show()
+    end
+
+    PlaceHeaderButton(pinBtn, hasCoords, -14)
+    PlaceHeaderButton(deliverPinBtn, hasDeliveryCoords, -14)
+    PlaceHeaderButton(deleteBtn, isHarvested, -14)
+
+    entryHeading:ClearAllPoints()
+    entryHeading:SetPoint("TOPLEFT", portraitFrame, "TOPRIGHT", 14, -2)
+    if lastRightBtn then
+        entryHeading:SetPoint("RIGHT", lastRightBtn, "LEFT", -8, 0)
     else
-        deleteBtn:Hide()
+        entryHeading:SetPoint("RIGHT", readerPanel, "RIGHT", -14, 0)
+    end
+
+    lastRightBtn = nil
+    local hasBack = (ns.navHistory and #ns.navHistory > 0)
+    local canShare = (isUnlocked or not isSpoilerFree)
+    PlaceHeaderButton(wideBtn, true, -40)
+    PlaceHeaderButton(shareBtn, canShare, -40)
+    PlaceHeaderButton(backBtn, hasBack, -40)
+
+    entryMeta:ClearAllPoints()
+    entryMeta:SetPoint("TOPLEFT", entryHeading, "BOTTOMLEFT", 0, -3)
+    if lastRightBtn then
+        entryMeta:SetPoint("RIGHT", lastRightBtn, "LEFT", -8, 0)
+    else
+        entryMeta:SetPoint("RIGHT", readerPanel, "RIGHT", -14, 0)
     end
 
     -- Field Notes
     notesBox:SetText((ns.db and ns.db.notes and ns.db.notes[entry.key]) or "")
 
     -- Story / Dossier Evidence Board View
+    local targetEntryKey = entry.key
+    local savedScroll = (ns.db and ns.db.scrollPositions and ns.db.scrollPositions[targetEntryKey]) or 0
+    isRestoringScroll = true
     storyScrollFrame:SetVerticalScroll(0)
 
     if entry.category == "Dossier" and ns.RenderDossierView then
@@ -446,6 +631,9 @@ function ns.RefreshReaderView()
             end
             if not isDark and ns.HighlightForParchment then
                 storyText = ns.HighlightForParchment(storyText)
+            end
+            if ns.InjectHyperlinks then
+                storyText = ns.InjectHyperlinks(storyText)
             end
             entryStory:SetText(storyText)
             local stringHeight = entryStory:GetStringHeight() or 80
@@ -503,5 +691,17 @@ function ns.RefreshReaderView()
         else
             connLabel:Hide()
         end
+    end
+
+    if savedScroll > 0 and C_Timer and C_Timer.After then
+        C_Timer.After(0.02, function()
+            if ns.selectedKey == targetEntryKey and storyScrollFrame then
+                local maxRange = storyScrollFrame:GetVerticalScrollRange() or 0
+                storyScrollFrame:SetVerticalScroll(math.min(maxRange, savedScroll))
+            end
+            isRestoringScroll = false
+        end)
+    else
+        isRestoringScroll = false
     end
 end

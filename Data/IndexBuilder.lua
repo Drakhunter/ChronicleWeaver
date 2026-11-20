@@ -223,30 +223,50 @@ end
 function ns.RegisterSavedItemInCodex(itemKey, itemData)
     if not itemKey or not itemData then return end
     local flavor = itemData.flavorText or itemData.story or ""
-    local wovenStory = flavor
+    local deliveryInfo = ns.GetItemDeliveryInfo and ns.GetItemDeliveryInfo(itemData.itemID, flavor, itemData.title or itemData.name)
+
+    local rawStory = flavor
+    if deliveryInfo and ns.FormatDeliveryDirectiveText then
+        local directive = ns.FormatDeliveryDirectiveText(deliveryInfo)
+        if directive ~= "" then
+            rawStory = (rawStory ~= "") and (rawStory .. "\n\n" .. directive) or directive
+        end
+    end
+
+    local wovenStory = rawStory
     local relatedKeys = {}
-    if ns.WeaveTextConnections and flavor ~= "" then
-        wovenStory, relatedKeys = ns.WeaveTextConnections(flavor)
+    if ns.WeaveTextConnections and rawStory ~= "" then
+        wovenStory, relatedKeys = ns.WeaveTextConnections(rawStory)
+    end
+
+    local summaryText = flavor
+    if summaryText == "" then
+        if deliveryInfo and deliveryInfo.primary then
+            summaryText = string.format("Deliver to %s in %s.", deliveryInfo.primary.npc, deliveryInfo.primary.location)
+        else
+            summaryText = "Curated relic discovered in " .. (itemData.zone or "Azeroth")
+        end
     end
 
     local entry = {
-        key         = itemKey,
-        category    = "Relic",
-        title       = itemData.title or itemData.name or "Ancient Relic",
-        era         = "In-Game Harvest",
-        zone        = itemData.zone or "Azeroth",
-        mapID       = itemData.mapID,
-        x           = itemData.x,
-        y           = itemData.y,
-        itemID      = itemData.itemID,
-        character   = itemData.character,
-        characters  = itemData.characters,
-        faction     = itemData.faction,
-        isHarvested = true,
-        icon        = itemData.icon or (ns.CategoryIcons and ns.CategoryIcons.Relic) or "Interface\\Icons\\INV_Misc_Gem_Variety_01",
-        summary     = flavor ~= "" and flavor or ("Curated relic discovered in " .. (itemData.zone or "Azeroth")),
-        story       = wovenStory,
-        related     = relatedKeys,
+        key          = itemKey,
+        category     = "Relic",
+        title        = itemData.title or itemData.name or "Ancient Relic",
+        era          = (deliveryInfo and deliveryInfo.categoryLabel) or "In-Game Harvest",
+        zone         = itemData.zone or "Azeroth",
+        mapID        = itemData.mapID,
+        x            = itemData.x,
+        y            = itemData.y,
+        itemID       = itemData.itemID,
+        deliveryInfo = deliveryInfo,
+        character    = itemData.character,
+        characters   = itemData.characters,
+        faction      = itemData.faction,
+        isHarvested  = true,
+        icon         = itemData.icon or (ns.CategoryIcons and ns.CategoryIcons.Relic) or "Interface\\Icons\\INV_Misc_Gem_Variety_01",
+        summary      = summaryText,
+        story        = wovenStory,
+        related      = relatedKeys,
     }
     return ns.UpsertRuntimeEntry(entry)
 end

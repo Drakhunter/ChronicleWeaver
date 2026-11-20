@@ -6,6 +6,7 @@
 local _, ns = ...
 
 ns.selectedKey = nil
+ns.navHistory = {}
 ns.listScrollOffset = 0
 ns.filteredCount = 0
 ns.filteredEntries = {}
@@ -180,6 +181,12 @@ local function EnsureListButton(index)
 
     btn:SetScript("OnClick", function(self, button)
         if self.isHeader then
+            if button == "RightButton" and not self.isEraGroup and self.groupKey ~= "GROUP_FAVORITES" and self.groupTitle then
+                if ns.PinNearestMissingBook then
+                    ns.PinNearestMissingBook(nil, self.groupTitle)
+                end
+                return
+            end
             if self.groupKey and ns.db then
                 ns.db.collapsedGroups = ns.db.collapsedGroups or {}
                 ns.db.collapsedGroups[self.groupKey] = not ns.db.collapsedGroups[self.groupKey]
@@ -207,7 +214,16 @@ local function EnsureListButton(index)
         if self.isHeader then
             GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
             GameTooltip:SetText(self.groupTitle or "Group", 1, 0.82, 0.45)
-            GameTooltip:AddLine("Click to toggle folder expansion.", 0.8, 0.8, 0.8)
+            local total = self.totalCount or 0
+            local unlocked = self.unlockedCount or 0
+            if total > 0 then
+                local pct = math.floor((unlocked / total) * 100 + 0.5)
+                GameTooltip:AddLine(string.format("Uncovered: %d / %d (%d%%)", unlocked, total, pct), 0.9, 0.9, 0.9)
+            end
+            GameTooltip:AddLine("Left-Click: Collapse / Expand folder", 0.6, 0.8, 1.0)
+            if not self.isEraGroup and self.groupKey ~= "GROUP_FAVORITES" then
+                GameTooltip:AddLine("Right-Click: Pin Nearest Missing Book / Lore", 0.4, 0.9, 0.6)
+            end
             GameTooltip:Show()
         elseif self.itemKey and ns.LoreByKey and ns.LoreByKey[self.itemKey] then
             local item = ns.LoreByKey[self.itemKey]
@@ -234,8 +250,15 @@ ns.listButtons = listButtons
 -- -------------------------------------------------------------------------
 -- Entry Selection Handler
 -- -------------------------------------------------------------------------
-function ns.SelectEntry(entryKey)
+function ns.SelectEntry(entryKey, isBackNav)
     if not entryKey then return end
+    if not isBackNav and ns.selectedKey and ns.selectedKey ~= entryKey then
+        ns.navHistory = ns.navHistory or {}
+        table.insert(ns.navHistory, ns.selectedKey)
+        if #ns.navHistory > 25 then
+            table.remove(ns.navHistory, 1)
+        end
+    end
     ns.selectedKey = entryKey
 
     local entry = ns.LoreByKey and ns.LoreByKey[entryKey]
@@ -248,6 +271,10 @@ function ns.SelectEntry(entryKey)
                 z = entry.era or "General Lore"
             end
             ns.db.collapsedGroups["ZONE_" .. z:lower()] = nil
+            if ns.GetChronologicalEraBucket then
+                local eraBucket = ns.GetChronologicalEraBucket(entry)
+                ns.db.collapsedGroups["ERA_" .. eraBucket:lower()] = nil
+            end
             ns.db.collapsedGroups["GROUP_FAVORITES"] = nil
         end
         if ns.activeCategory ~= targetCat then
@@ -286,6 +313,16 @@ function ns.SelectEntry(entryKey)
     end
 end
 
+function ns.NavigateBack()
+    if not ns.navHistory or #ns.navHistory == 0 then return false end
+    local prevKey = table.remove(ns.navHistory)
+    if prevKey then
+        ns.SelectEntry(prevKey, true)
+        return true
+    end
+    return false
+end
+
 -- -------------------------------------------------------------------------
 -- Filtering & Sorting Pipeline
 -- -------------------------------------------------------------------------
@@ -312,6 +349,23 @@ local function MatchesCharacter(entry, charFilter)
     return true
 end
 
+local function MatchesEra(entry, eraFilter)
+    if not eraFilter or eraFilter == "ALL" then return true end
+    if eraFilter == "HARVEST" then
+        return entry.isHarvested == true
+    elseif eraFilter == "FOREVER" then
+        if entry.deliveryInfo and entry.deliveryInfo.isLibraryBook then return true end
+        if entry.era and entry.era:find("Forever", 1, true) then return true end
+        if entry.key == "dossier:GrandLibrary" or entry.key == "dossier:SkyborneMysteries" or entry.key == "dossier:RivergladesCampaign" then
+            return true
+        end
+        return false
+    elseif eraFilter == "CLASSIC" then
+        return not entry.isHarvested and not (entry.era and entry.era:find("Forever", 1, true))
+    end
+    return true
+end
+
 local function FilterAndSortEntries()
     local filtered = {}
     local activeCat = ns.activeCategory or "Zone"
@@ -322,6 +376,7 @@ local function FilterAndSortEntries()
     local query = ns.searchQuery or ""
     local factionFilter = (ns.db and ns.db.factionFilter) or "ALL"
     local charFilter = (ns.db and ns.db.charFilter) or "ALL"
+    local eraFilter = (ns.db and ns.db.eraFilter) or "ALL"
     local isSpoilerFree = (ns.db and ns.db.spoilerFree == true)
 
     if ns.LoreEntries then
@@ -340,8 +395,9 @@ local function FilterAndSortEntries()
                     or (entry.zone and entry.zone:lower():find(query, 1, true))
                 local factionMatch = MatchesFaction(entry, factionFilter)
                 local charMatch = MatchesCharacter(entry, charFilter)
+                local eraMatch = MatchesEra(entry, eraFilter)
 
-                if catMatch and queryMatch and factionMatch and charMatch then
+                if catMatch and queryMatch and factionMatch and charMatch and eraMatch then
                     table.insert(filtered, entry)
                 end
             end
@@ -378,8 +434,8 @@ local function BuildDisplayRows(filtered)
         return ns.IsEntryUnlocked and ns.IsEntryUnlocked(key)
     end
 
-    -- Zone and Dossier tabs (or Flat mode) render as a clean direct list without redundant 1-item folders
-    if groupMode == "NONE" or activeCat == "Zone" or activeCat == "Dossier" then
+    -- Zone and Dossier tabs in Zone mode (or Flat mode) render as a clean direct list
+    if groupMode == "NONE" or (groupMode == "ZONE" and (activeCat == "Zone" or activeCat == "Dossier")) then
         local rows = {}
         for _, entry in ipairs(filtered) do
             table.insert(rows, { isHeader = false, entry = entry })
@@ -387,35 +443,42 @@ local function BuildDisplayRows(filtered)
         return rows
     end
 
+    local isEraMode = (groupMode == "ERA")
     local groups = {}
     local favEntries = {}
-    local zoneMap = {}
-    local zoneOrder = {}
+    local bucketMap = {}
+    local bucketOrder = {}
 
     for _, entry in ipairs(filtered) do
         if favs[entry.key] then
             table.insert(favEntries, entry)
         else
-            local z = entry.zone
-            if not z or z == "" or z == "Unknown" or z == "Azeroth" then
-                z = entry.era or "General Lore"
+            local bucketName
+            if isEraMode then
+                bucketName = (ns.GetChronologicalEraBucket and ns.GetChronologicalEraBucket(entry)) or (entry.era or "IV. Classic Azeroth")
+            else
+                bucketName = entry.zone
+                if not bucketName or bucketName == "" or bucketName == "Unknown" or bucketName == "Azeroth" then
+                    bucketName = entry.era or "General Lore"
+                end
             end
-            if not zoneMap[z] then
-                zoneMap[z] = {}
-                table.insert(zoneOrder, z)
+            if not bucketMap[bucketName] then
+                bucketMap[bucketName] = {}
+                table.insert(bucketOrder, bucketName)
             end
-            table.insert(zoneMap[z], entry)
+            table.insert(bucketMap[bucketName], entry)
         end
     end
 
-    table.sort(zoneOrder, function(a, b) return a:lower() < b:lower() end)
+    table.sort(bucketOrder, function(a, b) return a:lower() < b:lower() end)
 
     if #favEntries > 0 then
-        table.insert(groups, { key = "GROUP_FAVORITES", title = "* Favorites", entries = favEntries })
+        table.insert(groups, { key = "GROUP_FAVORITES", title = "* Favorites", entries = favEntries, isEraGroup = false })
     end
-    for _, z in ipairs(zoneOrder) do
-        if zoneMap[z] and #zoneMap[z] > 0 then
-            table.insert(groups, { key = "ZONE_" .. z:lower(), title = z, entries = zoneMap[z] })
+    local keyPrefix = isEraMode and "ERA_" or "ZONE_"
+    for _, bName in ipairs(bucketOrder) do
+        if bucketMap[bName] and #bucketMap[bName] > 0 then
+            table.insert(groups, { key = keyPrefix .. bName:lower(), title = bName, entries = bucketMap[bName], isEraGroup = isEraMode })
         end
     end
 
@@ -436,6 +499,7 @@ local function BuildDisplayRows(filtered)
             unlocked = unlocked,
             total = #grp.entries,
             isCollapsed = collapsed,
+            isEraGroup = grp.isEraGroup,
         })
 
         if not collapsed then
@@ -518,6 +582,9 @@ function ns.RefreshSidebarRows()
                 btn.isHeader = true
                 btn.groupKey = row.groupKey
                 btn.groupTitle = row.title
+                btn.unlockedCount = row.unlocked
+                btn.totalCount = row.total
+                btn.isEraGroup = row.isEraGroup
                 btn.itemKey = nil
 
                 btn.headerBg:Show()
@@ -587,7 +654,7 @@ function ns.RefreshSidebarRows()
                 end
 
                 -- 2. 10px Indentation under header when grouped
-                local isGroupedTab = (groupMode ~= "NONE") and (ns.activeCategory ~= "Zone") and (ns.activeCategory ~= "Dossier")
+                local isGroupedTab = (groupMode == "ERA") or ((groupMode ~= "NONE") and (ns.activeCategory ~= "Zone") and (ns.activeCategory ~= "Dossier"))
                 local indentX = isGroupedTab and 14 or 4
                 btn.icon:ClearAllPoints()
                 btn.icon:SetPoint("LEFT", indentX, 0)
@@ -655,6 +722,9 @@ function ns.RefreshUI()
     if main.spoilerBtn then
         main.spoilerBtn:SetText(ns.db.spoilerFree and "Spoilers: Hidden" or "Spoilers: Shown")
     end
+    if ns.RefreshOptionsPanel then
+        ns.RefreshOptionsPanel()
+    end
 
     if main.statsText then
         local totalCount = ns.LoreEntries and #ns.LoreEntries or 0
@@ -679,11 +749,17 @@ function ns.RefreshUI()
 
     if main.groupBtn then
         local mode = (ns.db and ns.db.groupMode) or "ZONE"
-        if mode ~= "NONE" then
+        if mode == "ERA" then
+            main.groupBtn:SetText("Group: |cffd4a85aEra|r")
+        elseif mode ~= "NONE" then
             main.groupBtn:SetText("Group: Zone")
         else
             main.groupBtn:SetText("Group: Flat")
         end
+    end
+
+    if ns.RefreshLedgerPanel then
+        ns.RefreshLedgerPanel()
     end
 
     if main.charBtn then

@@ -31,7 +31,7 @@ end
 -- 1. Pure Story Quest Event Harvester (QUEST_DETAIL & QUEST_COMPLETE)
 -- -------------------------------------------------------------------------
 local function OnQuestDetail()
-    if not ns.db then return end
+    if not ns.db or ns.db.trackQuests == false then return end
     ns.db.quests = ns.db.quests or {}
 
     local rawTitle = GetTitleText and GetTitleText()
@@ -97,7 +97,7 @@ local function OnQuestDetail()
 end
 
 local function OnQuestComplete()
-    if not ns.db then return end
+    if not ns.db or ns.db.trackQuests == false then return end
     ns.db.quests = ns.db.quests or {}
 
     local rawTitle = GetTitleText and GetTitleText()
@@ -155,7 +155,7 @@ local function OnQuestComplete()
     end
     ns.UnlockEntry(questKey)
 
-    if isNewResolution then
+    if isNewResolution and ns.db.chatAlerts ~= false then
         ns.Print(string.format("Recorded completion resolution for quest: |cffffd100%s|r", title))
     end
 end
@@ -205,8 +205,8 @@ function ns.SanitizeDuplicateQuests()
     return anyModified
 end
 
-function ns.ScanActiveQuestLog()
-    if not ns.db then return end
+function ns.ScanActiveQuestLog(isManual)
+    if not ns.db or (not isManual and ns.db.trackQuests == false) then return end
     ns.db.quests = ns.db.quests or {}
 
     local numEntries = 0
@@ -502,12 +502,27 @@ local function CreateGossipArchiveButton()
     return btn
 end
 
-local function OnGossipShow()
+local function ApplyGossipButtonVisibility(requireShown)
+    if requireShown and (not GossipFrame or not GossipFrame:IsShown()) then return end
+    if ns.db and ns.db.showGossipButton == false then
+        if ChronicleWeaverGossipButton then
+            ChronicleWeaverGossipButton:Hide()
+        end
+        return
+    end
     local btn = CreateGossipArchiveButton()
     if btn then
         btn.text:SetText("|cffd4a85a[+] Archive Lore|r")
         btn:Show()
     end
+end
+
+function ns.UpdateGossipButtonVisibility()
+    ApplyGossipButtonVisibility(true)
+end
+
+local function OnGossipShow()
+    ApplyGossipButtonVisibility(false)
 end
 
 ns.RegisterEvent("GOSSIP_SHOW", OnGossipShow)

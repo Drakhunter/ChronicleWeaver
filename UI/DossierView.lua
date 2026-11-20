@@ -240,6 +240,10 @@ local function EnsureSynthesisBox(parentFrame)
     leads:SetSpacing(2)
     box.leads = leads
 
+    if ns.AttachHyperlinkHandlers then
+        ns.AttachHyperlinkHandlers(box)
+    end
+
     parentFrame.synthesisBox = box
     return box
 end
@@ -328,6 +332,9 @@ function ns.RenderDossierView(parentFrame, dossierEntry, entryStoryFS)
     if not isDark and ns.HighlightForParchment then
         storyText = ns.HighlightForParchment(storyText)
     end
+    if ns.InjectHyperlinks then
+        storyText = ns.InjectHyperlinks(storyText)
+    end
     entryStoryFS:SetText(storyText)
     local storyHeight = entryStoryFS:GetStringHeight() or 60
 
@@ -374,6 +381,9 @@ function ns.RenderDossierView(parentFrame, dossierEntry, entryStoryFS)
             end
             if not isDark and ns.HighlightForParchment then
                 synText = ns.HighlightForParchment(synText)
+            end
+            if ns.InjectHyperlinks then
+                synText = ns.InjectHyperlinks(synText)
             end
             synBox.body:SetText(synText)
         else

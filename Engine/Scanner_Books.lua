@@ -68,7 +68,12 @@ end
 -- Capture & Archive In-Game Book Page
 -- -------------------------------------------------------------------------
 local function CaptureItemText()
-    if not ns.db then return end
+    if not ns.db or ns.db.trackBooks == false then
+        if ChronicleWeaverBookBadge then
+            ChronicleWeaverBookBadge:Hide()
+        end
+        return
+    end
     ns.db.books = ns.db.books or {}
 
     -- 1. Resolve Document Title with fallback chain
@@ -182,7 +187,7 @@ local function CaptureItemText()
         badge:Show()
     end
 
-    if isNewPage then
+    if isNewPage and ns.db.chatAlerts ~= false then
         ns.Print(string.format("Archived page %d of book |cffffd100%s|r!", pageNum, title))
     end
 end
@@ -195,7 +200,7 @@ ns.RegisterEvent("ITEM_TEXT_TRANSLATION", CaptureItemText)
 -- Gossip Plaque / Inscription Harvester (for objects opening GossipFrame)
 -- -------------------------------------------------------------------------
 local function CheckGossipForPlaque()
-    if not ns.db or not ns.db.books then return end
+    if not ns.db or ns.db.trackBooks == false or not ns.db.books then return end
 
     local rawTitle = (UnitExists("npc") and UnitName("npc"))
         or (UnitExists("target") and UnitName("target"))
@@ -261,7 +266,7 @@ local function CheckGossipForPlaque()
         end
         ns.UnlockEntry(bookKey)
 
-        if isNew then
+        if isNew and ns.db.chatAlerts ~= false then
             ns.Print(string.format("Archived plaque inscription: |cffffd100%s|r!", title))
         end
     end
